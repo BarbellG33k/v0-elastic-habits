@@ -1,0 +1,113 @@
+# Dependency directories
+/node_modules
+/.pnp
+.pnp.js
+jspm_packages/
+
+# Build directories
+/build
+/dist
+/.next
+/out
+
+# Cache directories
+.cache
+.turbo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# IDE/Editor
+.idea
+.vscode
+*.swp
+*.swo
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+._*
+
+# Testing
+/coverage
+.nyc_output
+
+# Debug
+debug.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Serverless
+.serverless/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Docker
+docker-compose.override.yml
+
+# MongoDB
+mongod.log
+
+# Audio files (sample/test recordings)
+*.wav
+*.mp3
+*.ogg
+
+# Certificates
+*.pem
+*.crt
+*.key
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# OS generated files
+.Spotlight-V100
+.Trashes
+
+# Vercel
+.vercel
+
+# Supabase
+.supabase/
+
+# Python (if using any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Visual Studio Code
+.history/
+*.code-workspace
+
+# macOS
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
