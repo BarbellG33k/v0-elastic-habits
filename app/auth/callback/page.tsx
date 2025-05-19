@@ -10,14 +10,28 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     // Handle the OAuth callback
     const handleAuthCallback = async () => {
-      const { error } = await supabase.auth.getSession()
+      try {
+        // Get the auth code from the URL
+        const { searchParams } = new URL(window.location.href)
+        const code = searchParams.get("code")
 
-      if (error) {
+        if (!code) {
+          throw new Error("No code provided in callback URL")
+        }
+
+        // Exchange the code for a session
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+          throw error
+        }
+
+        // Redirect to the dashboard
+        router.push("/")
+      } catch (error) {
         console.error("Error during auth callback:", error)
+        router.push("/auth/sign-in?error=Authentication%20failed")
       }
-
-      // Redirect to the dashboard
-      router.push("/")
     }
 
     handleAuthCallback()

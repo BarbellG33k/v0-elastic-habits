@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowRight, BarChart3, Calendar, CheckCircle, Plus, User } from "lucide-react"
 import { HabitProgress } from "@/components/habit-progress"
 import { DailyStreak } from "@/components/daily-streak"
+import { RecentActivity } from "@/components/recent-activity"
 import { useAuth } from "@/contexts/auth-context"
 import { useHabits } from "@/hooks/use-habits"
 
@@ -199,12 +200,7 @@ export default function Home() {
               <CardDescription>Your habit completions in the last 7 days</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {/* We'll populate this with real data from the database */}
-                <div className="text-center py-4 text-muted-foreground">
-                  Start tracking your habits to see your recent activity here
-                </div>
-              </div>
+              <RecentActivity />
             </CardContent>
           </Card>
         </div>

@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { uploadAvatar } from "@/lib/storage-utils"
+import { generateAvatar, getAvatarGenerationsRemaining } from "@/lib/avatar-utils"
 import { Loader2, Save, Upload, Wand2 } from "lucide-react"
 
 export default function ProfilePage() {
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isAvatarLoading, setIsAvatarLoading] = useState(false)
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false)
+  const [generationsRemaining, setGenerationsRemaining] = useState(5)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function ProfilePage() {
       const metadata = user.user_metadata || {}
       setFullName(metadata.full_name || "")
       setAvatarUrl(metadata.avatar_url || "")
+      setGenerationsRemaining(getAvatarGenerationsRemaining(metadata))
     }
   }, [user])
 
@@ -130,15 +133,13 @@ export default function ProfilePage() {
     setIsGeneratingAvatar(true)
 
     try {
-      // Generate a simple avatar using DiceBear API
-      const seed = user.id
-      const url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
-
+      const { url, remaining } = await generateAvatar(user.id)
       setAvatarUrl(url)
+      setGenerationsRemaining(remaining)
 
-      // Update user profile with new avatar URL
-      await updateProfile({
-        avatar_url: url,
+      toast({
+        title: "Avatar generated",
+        description: `You have ${remaining} generations remaining today`,
       })
     } catch (error: any) {
       toast({
@@ -230,16 +231,21 @@ export default function ProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleGenerateAvatar}
-                      disabled={isGeneratingAvatar}
+                      disabled={isGeneratingAvatar || generationsRemaining <= 0}
                     >
                       {isGeneratingAvatar ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
                         <Wand2 className="mr-2 h-4 w-4" />
                       )}
-                      Generate Avatar
+                      Generate Avatar {generationsRemaining > 0 && `(${generationsRemaining} left)`}
                     </Button>
                   </div>
+                  {generationsRemaining <= 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      You've reached the limit of 5 avatar generations today
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

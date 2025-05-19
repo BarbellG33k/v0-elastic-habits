@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Bell, Save, Trash2 } from "lucide-react"
+import { Bell, Coffee, Heart, Save, Trash2 } from "lucide-react"
 import { useHabits } from "@/hooks/use-habits"
 
 export default function SettingsPage() {
@@ -128,6 +128,30 @@ export default function SettingsPage() {
               <p className="text-sm text-muted-foreground mt-2">
                 This will permanently delete all your habits and tracking history
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Heart className="mr-2 h-5 w-5 text-red-500" />
+              Support This Project
+            </CardTitle>
+            <CardDescription>Help us keep Elastic Habits free and improve it</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              Elastic Habits is a free, open-source project. If you find it useful, please consider supporting its
+              development.
+            </p>
+            <div className="flex justify-center">
+              <Button variant="outline" size="lg" className="gap-2" asChild>
+                <a href="https://www.buymeacoffee.com/elastichabits" target="_blank" rel="noopener noreferrer">
+                  <Coffee className="h-5 w-5" />
+                  Buy me a coffee
+                </a>
+              </Button>
             </div>
           </CardContent>
         </Card>
