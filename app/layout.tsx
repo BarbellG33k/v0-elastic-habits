@@ -10,7 +10,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Elastic Habits Tracker",
+  title: "Momentum - Habit Tracker",
   description: "A modern habit tracking app based on the elastic habits concept",
     generator: 'v0.dev'
 }

@@ -138,16 +138,16 @@ export default function SettingsPage() {
               <Heart className="mr-2 h-5 w-5 text-red-500" />
               Support This Project
             </CardTitle>
-            <CardDescription>Help us keep Elastic Habits free and improve it</CardDescription>
+            <CardDescription>Help us keep Momentum free and improve it</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              Elastic Habits is a free, open-source project. If you find it useful, please consider supporting its
+              Momentum is a free, open-source project. If you find it useful, please consider supporting its
               development.
             </p>
             <div className="flex justify-center">
               <Button variant="outline" size="lg" className="gap-2" asChild>
-                <a href="https://www.buymeacoffee.com/elastichabits" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.buymeacoffee.com/momentum" target="_blank" rel="noopener noreferrer">
                   <Coffee className="h-5 w-5" />
                   Buy me a coffee
                 </a>

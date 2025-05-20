@@ -6,11 +6,13 @@ import { createContext, useContext, useEffect, useState } from "react"
 import type { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { getUserRole } from "@/lib/admin-utils"
 
 type AuthContextType = {
   user: User | null
   session: Session | null
   isLoading: boolean
+  isAdmin: boolean
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
@@ -24,13 +26,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const { toast } = useToast()
+
+  // Check if user is admin and enabled
+  const checkUserRole = async (userId: string) => {
+    if (!userId) return
+
+    try {
+      const userRole = await getUserRole(userId)
+
+      // If user is disabled, sign them out
+      if (userRole && !userRole.is_enabled) {
+        await supabase.auth.signOut()
+        toast({
+          title: "Account disabled",
+          description: "Your account has been disabled. Please contact support.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setIsAdmin(userRole?.is_admin || false)
+    } catch (error) {
+      console.error("Error checking user role:", error)
+    }
+  }
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+
+      if (session?.user) {
+        checkUserRole(session.user.id)
+      }
+
       setIsLoading(false)
     })
 
@@ -40,13 +72,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
+
+      if (session?.user) {
+        checkUserRole(session.user.id)
+      } else {
+        setIsAdmin(false)
+      }
+
       setIsLoading(false)
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [toast])
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -75,13 +114,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
         throw error
+      }
+
+      // Check if user is enabled
+      if (data.user) {
+        const userRole = await getUserRole(data.user.id)
+
+        if (userRole && !userRole.is_enabled) {
+          await supabase.auth.signOut()
+          throw new Error("Your account has been disabled. Please contact support.")
+        }
       }
 
       toast({
@@ -162,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isLoading, signUp, signIn, signInWithGoogle, signOut, updateProfile }}
+      value={{ user, session, isLoading, isAdmin, signUp, signIn, signInWithGoogle, signOut, updateProfile }}
     >
       {children}
     </AuthContext.Provider>

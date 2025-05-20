@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, BarChart3, Calendar, CheckCircle, Plus, User } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BarChart3, Calendar, CheckCircle, Plus, User } from "lucide-react"
 import { HabitProgress } from "@/components/habit-progress"
 import { DailyStreak } from "@/components/daily-streak"
 import { RecentActivity } from "@/components/recent-activity"
@@ -19,7 +19,7 @@ export default function Home() {
     return (
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-12">
         <div className="flex flex-col items-center text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">Welcome to Elastic Habits</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Welcome to Momentum</h1>
           <p className="text-xl text-muted-foreground max-w-2xl">
             Track your habits with flexibility. Define 3 different activities with 3 levels each per habit.
           </p>
@@ -88,123 +88,49 @@ export default function Home() {
     <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-6">
       <header className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Elastic Habits</h1>
-          <p className="text-muted-foreground">Track your habits with flexibility</p>
+          <h1 className="text-3xl font-bold">Welcome, {user.name}!</h1>
+          <p className="text-lg text-muted-foreground">Manage your habits and track progress.</p>
         </div>
-        <Link href="/track">
-          <Button>
-            Track Today
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
+        <Button asChild variant="outline" size="lg">
+          <Link href="/habits/new">Add New Habit</Link>
+        </Button>
       </header>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-              Habits Overview
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BarChart3 className="mr-2 h-5 w-5 text-teal-500" />
+              Habit Progress
             </CardTitle>
-            <CardDescription>Your active habits</CardDescription>
           </CardHeader>
           <CardContent>
-            {habits.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground mb-4">You don't have any habits yet</p>
-                <Link href="/habits">
-                  <Button variant="outline">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add New Habit
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {habits.slice(0, 3).map((habit) => (
-                  <div key={habit.id} className="flex justify-between items-center">
-                    <span className="font-medium">{habit.name}</span>
-                    <span className="text-sm text-muted-foreground">{habit.stats.completedDays} days</span>
-                  </div>
-                ))}
-                <Link href="/habits">
-                  <Button variant="outline" className="w-full mt-2">
-                    <Plus className="mr-2 h-4 w-4" />
-                    {habits.length > 3 ? "View All Habits" : "Add New Habit"}
-                  </Button>
-                </Link>
-              </div>
-            )}
+            <HabitProgress habits={habits} />
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-medium flex items-center">
+          <CardHeader>
+            <CardTitle className="flex items-center">
               <Calendar className="mr-2 h-5 w-5 text-blue-500" />
-              Current Streak
+              Daily Streaks
             </CardTitle>
-            <CardDescription>Your daily activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <DailyStreak />
-            <div className="mt-4 text-center">
-              <div className="text-2xl font-bold">
-                {habits.length > 0 ? Math.max(...habits.map((h) => h.stats.streak)) : 0} Days
-              </div>
-              <div className="text-sm text-muted-foreground">Current streak</div>
-            </div>
+            <DailyStreak habits={habits} />
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <BarChart3 className="mr-2 h-5 w-5 text-purple-500" />
-              Progress
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Plus className="mr-2 h-5 w-5 text-orange-500" />
+              Recent Activity
             </CardTitle>
-            <CardDescription>Monthly completion rate</CardDescription>
           </CardHeader>
           <CardContent>
-            <HabitProgress />
-            <div className="grid grid-cols-3 gap-2 mt-4 text-center text-sm">
-              <div>
-                <div className="font-medium">
-                  {habits.length > 0
-                    ? Math.round(
-                        (habits.reduce((sum, h) => sum + h.stats.completedDays, 0) / (habits.length * 30)) * 100,
-                      )
-                    : 0}
-                  %
-                </div>
-                <div className="text-muted-foreground">Completion</div>
-              </div>
-              <div>
-                <div className="font-medium">{habits.reduce((sum, h) => sum + h.stats.completedDays, 0)}</div>
-                <div className="text-muted-foreground">Active days</div>
-              </div>
-              <div>
-                <div className="font-medium">{habits.length}</div>
-                <div className="text-muted-foreground">Habits</div>
-              </div>
-            </div>
+            <RecentActivity habits={habits} />
           </CardContent>
         </Card>
       </div>
-
-      {habits.length > 0 && (
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your habit completions in the last 7 days</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RecentActivity />
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   )
 }

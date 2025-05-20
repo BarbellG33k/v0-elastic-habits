@@ -12,8 +12,8 @@ export default function TermsPage() {
 
           <h2>Introduction</h2>
           <p>
-            These Terms of Service ("Terms") govern your access to and use of the Elastic Habits application
-            ("Service"). Please read these Terms carefully before using the Service.
+            These Terms of Service ("Terms") govern your access to and use of the Momentum application ("Service").
+            Please read these Terms carefully before using the Service.
           </p>
 
           <h2>Acceptance of Terms</h2>
@@ -24,7 +24,7 @@ export default function TermsPage() {
 
           <h2>Description of Service</h2>
           <p>
-            Elastic Habits is a habit tracking application that allows users to define flexible habits with multiple
+            Momentum is a habit tracking application that allows users to define flexible habits with multiple
             activities and achievement levels.
           </p>
 
@@ -45,7 +45,7 @@ export default function TermsPage() {
           <h2>Intellectual Property</h2>
           <p>
             The Service and its original content, features, and functionality are and will remain the exclusive property
-            of Elastic Habits and its licensors.
+            of Momentum and its licensors.
           </p>
 
           <h2>Termination</h2>
@@ -56,8 +56,8 @@ export default function TermsPage() {
 
           <h2>Limitation of Liability</h2>
           <p>
-            In no event shall Elastic Habits, nor its directors, employees, partners, agents, suppliers, or affiliates,
-            be liable for any indirect, incidental, special, consequential or punitive damages, including without
+            In no event shall Momentum, nor its directors, employees, partners, agents, suppliers, or affiliates, be
+            liable for any indirect, incidental, special, consequential or punitive damages, including without
             limitation, loss of profits, data, use, goodwill, or other intangible losses.
           </p>
 
@@ -71,7 +71,7 @@ export default function TermsPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about these Terms, please contact us at:</p>
           <p>
-            <a href="mailto:support@elastichabits.app">support@elastichabits.app</a>
+            <a href="mailto:support@momentum.factor317.app">support@momentum.factor317.app</a>
           </p>
         </CardContent>
       </Card>

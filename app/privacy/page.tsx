@@ -12,8 +12,8 @@ export default function PrivacyPage() {
 
           <h2>Introduction</h2>
           <p>
-            This Privacy Policy describes how Elastic Habits ("we", "our", or "us") collects, uses, and shares your
-            personal information when you use our application.
+            This Privacy Policy describes how Momentum ("we", "our", or "us") collects, uses, and shares your personal
+            information when you use our application.
           </p>
 
           <h2>Information We Collect</h2>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:support@elastichabits.app">support@elastichabits.app</a>
+            <a href="mailto:support@momentum.factor317.app">support@momentum.factor317.app</a>
           </p>
         </CardContent>
       </Card>

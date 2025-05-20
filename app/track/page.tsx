@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,17 +10,42 @@ import { format } from "date-fns"
 import { useHabits } from "@/hooks/use-habits"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
+import { useTheme } from "next-themes"
 import Link from "next/link"
 
 export default function TrackPage() {
   const { habits, trackHabit, getTrackedHabits, isLoading } = useHabits()
   const { user } = useAuth()
   const { toast } = useToast()
+  const { theme } = useTheme()
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [defaultTabs, setDefaultTabs] = useState<Record<string, string>>({})
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy")
   const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
 
   const trackedHabits = getTrackedHabits(format(selectedDate, "yyyy-MM-dd"))
+
+  // Set default tabs based on tracked habits
+  useEffect(() => {
+    const newDefaultTabs: Record<string, string> = {}
+
+    habits.forEach((habit) => {
+      const trackedForHabit = trackedHabits.filter((th) => th.habitId === habit.id)
+      if (trackedForHabit.length > 0) {
+        // Get the most recently tracked activity for this habit
+        const mostRecent = trackedForHabit.sort(
+          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        )[0]
+
+        newDefaultTabs[habit.id] = `activity-${mostRecent.activityIndex}`
+      } else {
+        // Default to first activity if none tracked
+        newDefaultTabs[habit.id] = `activity-0`
+      }
+    })
+
+    setDefaultTabs(newDefaultTabs)
+  }, [habits, trackedHabits])
 
   const handleTrackHabit = (habitId: string, activityIndex: number, levelIndex: number) => {
     trackHabit({
@@ -136,7 +161,7 @@ export default function TrackPage() {
                   <CardDescription>Select an activity and level to track</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue={`activity-0`} className="w-full">
+                  <Tabs defaultValue={defaultTabs[habit.id] || `activity-0`} className="w-full">
                     <TabsList className="w-full justify-start mb-4">
                       {habit.activities.map(
                         (activity, activityIndex) =>
@@ -161,7 +186,15 @@ export default function TrackPage() {
                                   level && (
                                     <div key={levelIndex} className="text-center">
                                       <Button
-                                        className={`w-full h-24 flex flex-col items-center justify-center ${getLevelColor(levelIndex)}`}
+                                        className={`w-full h-24 flex flex-col items-center justify-center ${getLevelColor(levelIndex)} ${
+                                          trackedActivities.some(
+                                            (ta) => ta.activityIndex === activityIndex && ta.levelIndex === levelIndex,
+                                          )
+                                            ? theme === "dark"
+                                              ? "ring-2 ring-gray-300"
+                                              : "ring-2 ring-black"
+                                            : ""
+                                        }`}
                                         onClick={() => handleTrackHabit(habit.id, activityIndex, levelIndex)}
                                         disabled={trackedActivities.some(
                                           (ta) => ta.activityIndex === activityIndex && ta.levelIndex === levelIndex,

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BarChart3, Calendar, Home, LogOut, Settings } from "lucide-react"
+import { BarChart3, Calendar, Home, LogOut, Settings, ShieldAlert } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import {
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
 
   const isActive = (path: string) => {
     return pathname === path
@@ -40,7 +40,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">Elastic Habits</span>
+            <span className="font-bold text-xl">Momentum</span>
           </Link>
           {user && (
             <nav className="hidden md:flex gap-6">
@@ -62,6 +62,14 @@ export function Navbar() {
                   Track
                 </Button>
               </Link>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant={isActive("/admin") ? "default" : "ghost"} className="h-8 gap-1">
+                    <ShieldAlert className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
             </nav>
           )}
         </div>
@@ -95,6 +103,14 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Settings</Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <ShieldAlert className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -139,6 +155,14 @@ export function Navbar() {
                 <span className="text-xs">Settings</span>
               </Button>
             </Link>
+            {isAdmin && (
+              <Link href="/admin" className="flex-1">
+                <Button variant="ghost" className="w-full h-12 gap-1 rounded-none">
+                  <ShieldAlert className="h-4 w-4" />
+                  <span className="text-xs">Admin</span>
+                </Button>
+              </Link>
+            )}
           </nav>
         </div>
       )}
