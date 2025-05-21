@@ -1,8 +1,8 @@
-# Elastic Habits App
+# Momentum Elastic Habits App
 
 A modern habit tracking application based on the "Elastic Habits" concept, allowing users to define flexible habits with multiple activities and achievement levels.
 
-![Elastic Habits App](https://github.com/yourusername/elastic-habits-app/raw/main/public/app-screenshot.png)
+[Momentum App](https://github.com/BarbellG33k/elastic-habits-app/raw/main/public/app-screenshot.png)
 
 ## Features
 
