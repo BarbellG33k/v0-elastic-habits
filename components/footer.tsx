@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Coffee } from "lucide-react"
+import { AboutPopup } from "@/components/about-popup"
 
 export function Footer() {
   return (
@@ -7,6 +8,7 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 md:h-16">
         <div className="text-sm text-muted-foreground">© {new Date().getFullYear()} Momentum. All rights reserved.</div>
         <div className="flex items-center gap-4">
+          <AboutPopup />
           <Link
             href="https://www.buymeacoffee.com/momentum"
             target="_blank"

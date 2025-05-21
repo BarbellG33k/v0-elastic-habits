@@ -7,6 +7,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { BarChart3, Calendar, Home, LogOut, Settings, ShieldAlert } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { Logo } from "@/components/logo"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +41,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">Momentum</span>
+            <Logo />
           </Link>
           {user && (
             <nav className="hidden md:flex gap-6">
