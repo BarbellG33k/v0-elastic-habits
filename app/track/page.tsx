@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,16 +21,20 @@ export default function TrackPage() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [defaultTabs, setDefaultTabs] = useState<Record<string, string>>({})
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy")
-  const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
 
-  const trackedHabits = getTrackedHabits(format(selectedDate, "yyyy-MM-dd"))
+  const formattedSelectedDateString = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate])
+  const isToday = formattedSelectedDateString === format(new Date(), "yyyy-MM-dd")
+
+  const trackedHabitsForDate = useMemo(
+    () => getTrackedHabits(formattedSelectedDateString),
+    [getTrackedHabits, formattedSelectedDateString],
+  )
 
   // Set default tabs based on tracked habits
   useEffect(() => {
     const newDefaultTabs: Record<string, string> = {}
-
     habits.forEach((habit) => {
-      const trackedForHabit = trackedHabits.filter((th) => th.habitId === habit.id)
+      const trackedForHabit = trackedHabitsForDate.filter((th) => th.habitId === habit.id)
       if (trackedForHabit.length > 0) {
         // Get the most recently tracked activity for this habit
         const mostRecent = trackedForHabit.sort(
@@ -43,14 +47,19 @@ export default function TrackPage() {
         newDefaultTabs[habit.id] = `activity-0`
       }
     })
-
-    setDefaultTabs(newDefaultTabs)
-  }, [habits, trackedHabits])
+    // Only update if newDefaultTabs is actually different to prevent potential loops
+    setDefaultTabs((currentDefaultTabs) => {
+      if (JSON.stringify(currentDefaultTabs) !== JSON.stringify(newDefaultTabs)) {
+        return newDefaultTabs
+      }
+      return currentDefaultTabs
+    })
+  }, [habits, trackedHabitsForDate])
 
   const handleTrackHabit = (habitId: string, activityIndex: number, levelIndex: number) => {
     trackHabit({
       habitId,
-      date: format(selectedDate, "yyyy-MM-dd"),
+      date: formattedSelectedDateString,
       activityIndex,
       levelIndex,
       timestamp: new Date().toISOString(),
@@ -122,14 +131,13 @@ export default function TrackPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setSelectedDate(new Date(selectedDate.getTime() - 86400000))}>
+          <Button onClick={() => setSelectedDate(new Date(selectedDate.getTime() - 86400000))}>
             Previous Day
           </Button>
-          <Button variant="outline" onClick={() => setSelectedDate(new Date())} disabled={isToday}>
+          <Button onClick={() => setSelectedDate(new Date())} disabled={isToday}>
             Today
           </Button>
           <Button
-            variant="outline"
             onClick={() => setSelectedDate(new Date(selectedDate.getTime() + 86400000))}
             disabled={
               format(new Date(selectedDate.getTime() + 86400000), "yyyy-MM-dd") > format(new Date(), "yyyy-MM-dd")
@@ -144,15 +152,15 @@ export default function TrackPage() {
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground mb-4">You don't have any habits to track yet</p>
-            <Button asChild variant="default">
-              <Link href="/habits">Create Your First Habit</Link>
+            <Button asChild>
+              <Link href="/habits" className="btn btn-default">Create Your First Habit</Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
           {habits.map((habit) => {
-            const trackedActivities = trackedHabits.filter((th) => th.habitId === habit.id)
+            const trackedActivities = trackedHabitsForDate.filter((th) => th.habitId === habit.id)
 
             return (
               <Card key={habit.id}>
