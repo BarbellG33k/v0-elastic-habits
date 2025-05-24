@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
 
 export function AboutSection() {
   return (
@@ -37,17 +36,9 @@ export function AboutSection() {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-muted-foreground">
-            The app is completely free and open-source. Your support through{" "}
-            <Link
-              href="https://www.buymeacoffee.com/momentum"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground hover:underline"
-            >
-              Buy Me a Coffee
-            </Link>{" "}
-            helps cover hosting costs
+          <p>
+            The app is completely free and open-source. Your support through "Buy Me a Coffee" helps cover hosting costs
+            and enables continued development of new features.
           </p>
         </div>
       </CardContent>

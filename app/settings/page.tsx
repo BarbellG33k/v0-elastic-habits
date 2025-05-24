@@ -4,11 +4,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Bell, Coffee, Heart, Save, Trash2 } from "lucide-react"
+import { Coffee, Heart, Save, Trash2 } from "lucide-react"
 import { useHabits } from "@/hooks/use-habits"
+import { ReminderSettings } from "@/components/reminder-settings" // Import the new component
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -51,48 +51,8 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-bold tracking-tight mb-6">Settings</h1>
 
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bell className="mr-2 h-5 w-5" />
-              Notifications
-            </CardTitle>
-            <CardDescription>Configure reminders to help you stay on track</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="notifications">Daily Reminders</Label>
-                <p className="text-sm text-muted-foreground">Receive a reminder if you haven't tracked any habits</p>
-              </div>
-              <Switch
-                id="notifications"
-                checked={settings.notifications}
-                onCheckedChange={(checked) => setSettings({ ...settings, notifications: checked })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reminder-time">Reminder Time</Label>
-              <Select
-                value={settings.reminderTime}
-                onValueChange={(value) => setSettings({ ...settings, reminderTime: value })}
-                disabled={!settings.notifications}
-              >
-                <SelectTrigger id="reminder-time">
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="08:00">8:00 AM</SelectItem>
-                  <SelectItem value="12:00">12:00 PM</SelectItem>
-                  <SelectItem value="17:00">5:00 PM</SelectItem>
-                  <SelectItem value="20:00">8:00 PM</SelectItem>
-                  <SelectItem value="22:00">10:00 PM</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Replace the old notifications card with our new ReminderSettings component */}
+        <ReminderSettings />
 
         <Card>
           <CardHeader>
