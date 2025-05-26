@@ -34,5 +34,5 @@ A modern habit tracking application based on the "Elastic Habits" concept, allow
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/elastic-habits-app.git
+   git clone https://github.com/barbellG33k/elastic-habits-app.git
    cd elastic-habits-app
