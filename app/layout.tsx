@@ -6,7 +6,6 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/contexts/auth-context"
 import { Toaster } from "@/components/ui/toaster"
-import { EnhancedHabitReminder } from "@/components/enhanced-habit-reminder" // Import the reminder component
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,7 +31,6 @@ export default function RootLayout({
               <Footer />
             </div>
             <Toaster />
-            <EnhancedHabitReminder /> {/* Add the reminder component here */}
           </AuthProvider>
         </ThemeProvider>
       </body>

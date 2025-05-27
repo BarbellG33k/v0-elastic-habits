@@ -1,47 +1,59 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Coffee } from "lucide-react"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import Link from "next/link"
 
-export function AboutSection() {
+const AboutSection = () => {
   return (
-    <Card className="mt-12">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">
-          About{" "}
-          <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">Momentum</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="prose dark:prose-invert max-w-none">
-        <p className="text-center text-lg text-muted-foreground mb-6">
-          A flexible habit tracking app designed for real life
-        </p>
+    <section id="about" className="py-12">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-semibold text-center mb-8">About Momentum</h2>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <h3>The Elastic Habits Concept</h3>
-            <p>
-              Momentum is built on the "elastic habits" concept, which recognizes that life isn't always predictable.
-              Some days you have more energy and time than others. Instead of the rigid "all or nothing" approach of
-              traditional habit trackers, Momentum lets you define multiple activities and achievement levels for each
-              habit.
-            </p>
-          </div>
-
-          <div>
-            <h3>Flexibility That Works</h3>
-            <p>
-              For example, on busy days, you might only complete a 10-minute workout (Bronze level), while on days with
-              more free time, you might achieve a full 30-minute session (Gold level). This flexibility helps maintain
-              your streak even when life gets hectic.
-            </p>
-          </div>
-        </div>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1">
+            <AccordionTrigger>What is Momentum?</AccordionTrigger>
+            <AccordionContent>
+              Momentum is a simple, open-source habit tracker designed to help you build and maintain positive habits.
+              It's built with modern web technologies and focuses on a clean, intuitive user experience.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger>Why use Momentum?</AccordionTrigger>
+            <AccordionContent>
+              Momentum helps you stay consistent with your habits by providing a visual representation of your progress.
+              It's a great way to track your daily, weekly, or monthly goals and stay motivated.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger>Features</AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                <li>Simple and intuitive interface</li>
+                <li>Track daily, weekly, or monthly habits</li>
+                <li>Visual progress tracking</li>
+                <li>Open-source and free to use</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         <div className="mt-8 text-center">
-          <p>
-            The app is completely free and open-source. Your support through "Buy Me a Coffee" helps cover hosting costs
-            and enables continued development of new features.
+          <p className="text-muted-foreground mb-4">
+            The app is completely free and open-source. Your support helps cover hosting costs:
           </p>
+          <Link
+            href="https://www.buymeacoffee.com/momentum"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
+            <Coffee className="h-5 w-5" />
+            <span>Buy Me a Coffee</span>
+            <span className="text-amber-100">☕</span>
+          </Link>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }
+
+export default AboutSection

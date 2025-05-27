@@ -281,6 +281,54 @@ export function useHabits() {
     [user, fetchHabits, toast],
   )
 
+  // Untrack a habit
+  const untrackHabit = useCallback(
+    async (habitId: string, date: string, activityIndex: number, levelIndex: number) => {
+      if (!user) return
+
+      try {
+        const { error } = await supabase
+          .from("habit_tracking")
+          .delete()
+          .match({
+            habit_id: habitId,
+            date: date,
+            activity_index: activityIndex,
+            level_index: levelIndex,
+          })
+
+        if (error) {
+          throw error
+        }
+
+        // Remove the tracking from state
+        setTracking((prev) =>
+          prev.filter(
+            (t) =>
+              !(
+                t.habitId === habitId &&
+                t.date === date &&
+                t.activityIndex === activityIndex &&
+                t.levelIndex === levelIndex
+              ),
+          ),
+        )
+
+        toast({
+          title: "Habit untracked",
+          description: "The habit tracking has been removed",
+        })
+      } catch (error: any) {
+        toast({
+          title: "Error untracking habit",
+          description: error.message,
+          variant: "destructive",
+        })
+      }
+    },
+    [user, toast],
+  )
+
   // Get tracked habits for a specific date
   const getTrackedHabits = useCallback(
     (date: string) => {
@@ -333,6 +381,7 @@ export function useHabits() {
     updateHabit,
     deleteHabit,
     trackHabit,
+    untrackHabit,
     getTrackedHabits,
     clearAllData,
     refreshHabits: fetchHabits,
