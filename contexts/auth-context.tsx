@@ -48,8 +48,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIsAdmin(userRole?.is_admin || false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking user role:", error)
+      // Only show toast for non-404 errors
+      if (error?.status !== 404) {
+        toast({
+          title: "Error checking user role",
+          description: "There was an error checking your permissions. Please try again.",
+          variant: "destructive",
+        })
+      }
+      setIsAdmin(false) // Ensure admin status is false on error
     }
   }
 

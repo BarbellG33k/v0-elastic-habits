@@ -22,13 +22,13 @@ export async function getUserRole(userId: string) {
 
     if (error) {
       console.error("Error fetching user role:", error)
-      return null
+      throw error
     }
 
     return data
   } catch (error) {
     console.error("Error fetching user role:", error)
-    return null
+    throw error
   }
 }
 
