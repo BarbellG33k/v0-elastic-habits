@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+import { BuyMeCoffeeButton } from "@/components/buy-me-coffee-button"
 
 export function AboutSection() {
   return (
@@ -36,18 +36,15 @@ export function AboutSection() {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-4">
           <p className="text-muted-foreground">
-            The app is completely free and open-source. Your support through{" "}
-            <Link
-              href="https://www.buymeacoffee.com/momentum"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground hover:underline"
-            >
-              Buy Me a Coffee
-            </Link>{" "}
-            helps cover hosting costs
+            The app is completely free and open-source.
+          </p>
+          <div className="flex justify-center">
+            <BuyMeCoffeeButton />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Your support helps cover hosting costs and keeps the app running
           </p>
         </div>
       </CardContent>
