@@ -2,26 +2,32 @@
 
 import { useTheme } from "next-themes"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useEffect, useState } from "react"
+import Image from "next/image"
 
 export function Logo() {
   const { theme } = useTheme()
-  const isDark = theme === "dark"
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // During server render and initial mount, use light theme colors
+  const isDark = mounted ? theme === "dark" : false
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center cursor-pointer">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="14" stroke={isDark ? "#ffffff" : "#000000"} strokeWidth="2" />
-              <path
-                d="M8 16C8 16 12 10 16 16C20 22 24 16 24 16"
-                stroke={isDark ? "#ffffff" : "#000000"}
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <circle cx="16" cy="16" r="4" fill={isDark ? "#9333ea" : "#7c3aed"} />
-            </svg>
+            <Image
+              src="/favicon.png"
+              alt="Momentum Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
             <span className="ml-2 text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">
               Momentum
             </span>
