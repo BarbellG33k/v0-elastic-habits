@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { SettingsProvider } from "@/contexts/settings-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Metadata } from 'next'
+import { EnhancedHabitReminder } from "@/components/enhanced-habit-reminder"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -49,6 +50,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <Toaster />
+              <EnhancedHabitReminder />
             </SettingsProvider>
           </AuthProvider>
         </ThemeProvider>
