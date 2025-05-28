@@ -191,10 +191,10 @@ export default function TrackPage() {
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Track Your Habits</h1>
-          <p className="text-muted-foreground flex items-center">
+          <span className="text-muted-foreground flex items-center">
             <Calendar className="mr-2 h-4 w-4" />
             {formattedDate} {isToday && <Badge className="ml-2">Today</Badge>}
-          </p>
+          </span>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setSelectedDate(new Date(selectedDate.getTime() - 86400000))}>

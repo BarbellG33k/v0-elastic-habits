@@ -36,8 +36,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userRole = await getUserRole(userId)
 
+      // If no role returned, treat as non-admin enabled user
+      if (!userRole) {
+        setIsAdmin(false)
+        return
+      }
+
       // If user is disabled, sign them out
-      if (userRole && !userRole.is_enabled) {
+      if (!userRole.is_enabled) {
         await supabase.auth.signOut()
         toast({
           title: "Account disabled",
@@ -47,9 +53,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      setIsAdmin(userRole?.is_admin || false)
-    } catch (error) {
+      setIsAdmin(userRole.is_admin || false)
+    } catch (error: any) {
       console.error("Error checking user role:", error)
+      
+      // Handle all expected error cases silently
+      if (error.message?.includes('infinite recursion') ||
+          error.message?.includes('creating default role') ||
+          error.message?.includes('PGRST116') ||
+          error?.code === 'PGRST116') {
+        setIsAdmin(false)
+        return
+      }
+
+      // Only show toast for truly unexpected errors
+      if (!error.message?.includes('default role')) {
+        toast({
+          title: "Error checking permissions",
+          description: "There was an error checking your permissions. Please try again later.",
+          variant: "destructive",
+        })
+      }
+      
+      setIsAdmin(false)
     }
   }
 
