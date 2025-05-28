@@ -10,6 +10,7 @@ import { RecentActivity } from "@/components/recent-activity"
 import { AboutSection } from "@/components/about-section"
 import { useAuth } from "@/contexts/auth-context"
 import { useHabits } from "@/hooks/use-habits"
+import { SloganRotator } from "@/components/SloganRotator"
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth()
@@ -37,6 +38,13 @@ export default function Home() {
               <Link href="/auth/sign-up">Create Account</Link>
             </Button>
           </div>
+          <Button asChild variant="link" size="lg" className="text-muted-foreground hover:text-primary">
+            <Link href="/how-to-use">
+              Show me how to use the app
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <SloganRotator />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12">

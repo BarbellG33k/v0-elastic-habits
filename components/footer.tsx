@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { Coffee } from "lucide-react"
+import { HelpCircle } from "lucide-react"
 import { AboutPopup } from "@/components/about-popup"
+import { BuyMeCoffeeButton } from "@/components/buy-me-coffee-button"
 
 export function Footer() {
   return (
@@ -10,14 +11,13 @@ export function Footer() {
         <div className="flex items-center gap-4">
           <AboutPopup />
           <Link
-            href="https://www.buymeacoffee.com/momentum"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/how-to-use"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Coffee className="h-4 w-4" />
-            <span>Buy me a coffee</span>
+            <HelpCircle className="h-4 w-4" />
+            <span>How to Use</span>
           </Link>
+          <BuyMeCoffeeButton />
           <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Privacy
           </Link>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BarChart3, Calendar, Home, LogOut, Settings, ShieldAlert } from "lucide-react"
+import { BarChart3, Calendar, Home, LogOut, Settings, ShieldAlert, HelpCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { Logo } from "@/components/logo"
 import {
@@ -63,6 +63,12 @@ export function Navbar() {
                   Track
                 </Button>
               </Link>
+              <Link href="/how-to-use">
+                <Button variant={isActive("/how-to-use") ? "default" : "ghost"} className="h-8 gap-1">
+                  <HelpCircle className="h-4 w-4" />
+                  How to Use
+                </Button>
+              </Link>
               {isAdmin && (
                 <Link href="/admin">
                   <Button variant={isActive("/admin") ? "default" : "ghost"} className="h-8 gap-1">
@@ -75,6 +81,14 @@ export function Navbar() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!user && (
+            <Link href="/how-to-use">
+              <Button variant="ghost" size="sm" className="gap-1">
+                <HelpCircle className="h-4 w-4" />
+                How to Use
+              </Button>
+            </Link>
+          )}
           {user ? (
             <>
               <Link href="/settings">
@@ -103,6 +117,9 @@ export function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/how-to-use">How to Use</Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>
@@ -148,6 +165,12 @@ export function Navbar() {
               <Button variant="ghost" className="w-full h-12 gap-1 rounded-none">
                 <Calendar className="h-4 w-4" />
                 <span className="text-xs">Track</span>
+              </Button>
+            </Link>
+            <Link href="/how-to-use" className="flex-1">
+              <Button variant="ghost" className="w-full h-12 gap-1 rounded-none">
+                <HelpCircle className="h-4 w-4" />
+                <span className="text-xs">Help</span>
               </Button>
             </Link>
             <Link href="/settings" className="flex-1">
