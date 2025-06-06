@@ -1,53 +1,80 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
+# General
+# ----------------------------------------------------------------
+# System files
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# debug
+# Log files
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# env files
-.env*
+# IDEs
+.vscode/
+.idea/
 
-# vercel
-.vercel
+# Local Environment Variables
+# Keep .env.example in git, but ignore all other .env files
+.env.*
+!.env.example
+.env.local
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Frontend (Next.js in v0-elastic-habits)
+# ----------------------------------------------------------------
+/v0-elastic-habits/.next/
+/v0-elastic-habits/out/
+/v0-elastic-habits/build/
+/v0-elastic-habits/.vercel/
+/v0-elastic-habits/next-env.d.ts
+/v0-elastic-habits/*.tsbuildinfo
+
+# Dependencies (applies to any package.json)
+# ----------------------------------------------------------------
+node_modules/
+/v0-elastic-habits/node_modules
+
+# Supabase
+# ----------------------------------------------------------------
+# Ignore the generated temporary folder
+/supabase/.temp/
+
+# Ignore local database files if you were running it locally
+# /supabase/volumes/
+
+# It's good practice to keep the project_id_file out of git
+# if you are in a public repo.
+/supabase/.branches/_current_branch
+/supabase/logs/
+
+# Test-related
+# ----------------------------------------------------------------
+coverage/
+/v0-elastic-habits/coverage/
 
 # macOS
-.DS_Store
+/v0-elastic-habits/.DS_Store
 # logs
-logs
-*.log
-# coverage
-coverage
+/v0-elastic-habits/logs
 # misc
-.vscode
+/v0-elastic-habits/.vscode
 # local env files
-.env.local
+/v0-elastic-habits/.env.local
 # local build artifacts
-.env.development.local
+/v0-elastic-habits/.env.development.local
 # local development
-.env.test.local
+/v0-elastic-habits/.env.test.local
 # local production
-.env.production.local
+/v0-elastic-habits/.env.production.local
 # next.js cache
-.next/cache
+/v0-elastic-habits/.next/cache
 # next.js build cache
-.next/cache-loader
+/v0-elastic-habits/.next/cache-loader
 # next.js static files
-.next/static
+/v0-elastic-habits/.next/static
 # next.js serverless functions
-.next/serverless    
+/v0-elastic-habits/.next/serverless    

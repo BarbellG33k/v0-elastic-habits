@@ -1,0 +1,80 @@
+/* Level button styles */
+.level-button {
+  @apply w-full h-24 flex flex-col items-center justify-center transition-colors duration-200;
+}
+
+/* Bronze level */
+.level-button-bronze {
+  @apply bg-amber-500/20 hover:bg-amber-500/90;
+}
+
+.level-button-bronze.selected {
+  @apply bg-amber-500;
+}
+
+.level-button-bronze.disabled {
+  @apply bg-amber-500/10 cursor-not-allowed hover:bg-amber-500/10;
+}
+
+/* Silver level */
+.level-button-silver {
+  @apply bg-slate-400/20 hover:bg-slate-400/90;
+}
+
+.level-button-silver.selected {
+  @apply bg-slate-400;
+}
+
+.level-button-silver.disabled {
+  @apply bg-slate-400/10 cursor-not-allowed hover:bg-slate-400/10;
+}
+
+/* Gold level */
+.level-button-gold {
+  @apply bg-yellow-400/20 hover:bg-yellow-400/90;
+}
+
+.level-button-gold.selected {
+  @apply bg-yellow-400;
+}
+
+.level-button-gold.disabled {
+  @apply bg-yellow-400/10 cursor-not-allowed hover:bg-yellow-400/10;
+}
+
+/* Activity tab styles */
+.activity-tab {
+  @apply flex-1 flex items-center justify-center gap-2;
+}
+
+.activity-tab-completed {
+  @apply text-green-500;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto;
+}
+
+/* Card layouts */
+.habit-card {
+  @apply space-y-4;
+}
+
+.levels-grid {
+  @apply grid grid-cols-3 gap-4;
+}
+
+/* Trophy icon */
+.trophy-icon {
+  @apply h-6 w-6 mb-2;
+}
+
+/* Level text */
+.level-name {
+  @apply font-medium;
+}
+
+.level-description {
+  @apply text-xs;
+}
