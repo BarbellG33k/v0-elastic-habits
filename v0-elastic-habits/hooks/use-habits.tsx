@@ -24,18 +24,24 @@ export function useHabits() {
 
     setIsLoading(true)
     try {
-      // Fetch habits
-      const { data: habitsData, error: habitsError } = await supabase
+      // Add timeout to prevent hanging
+      const habitsPromise = supabase
         .from("habits")
         .select("*")
         .order("created_at", { ascending: false })
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Habits fetch timeout')), 10000)
+      )
+
+      const { data: habitsData, error: habitsError } = await Promise.race([habitsPromise, timeoutPromise]) as any
 
       if (habitsError) {
         throw habitsError
       }
 
       // Transform the data to match our Habit type
-      const transformedHabits: Habit[] = habitsData.map((habit) => ({
+      const transformedHabits: Habit[] = habitsData.map((habit: any) => ({
         id: habit.id,
         name: habit.name,
         activities: habit.activities,
@@ -45,18 +51,24 @@ export function useHabits() {
 
       setHabits(transformedHabits)
 
-      // Fetch tracking data
-      const { data: trackingData, error: trackingError } = await supabase
+      // Fetch tracking data with timeout
+      const trackingPromise = supabase
         .from("habit_tracking")
         .select("*")
         .order("date", { ascending: false })
+
+      const trackingTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tracking fetch timeout')), 10000)
+      )
+
+      const { data: trackingData, error: trackingError } = await Promise.race([trackingPromise, trackingTimeoutPromise]) as any
 
       if (trackingError) {
         throw trackingError
       }
 
       // Transform the data to match our HabitTracking type
-      const transformedTracking: HabitTracking[] = trackingData.map((track) => ({
+      const transformedTracking: HabitTracking[] = trackingData.map((track: any) => ({
         habitId: track.habit_id,
         date: track.date,
         activityIndex: track.activity_index,
@@ -100,11 +112,15 @@ export function useHabits() {
 
       setHabits(updatedHabits)
     } catch (error: any) {
+      // console.log('Habits fetch error:', error)
       toast({
         title: "Error fetching data",
-        description: error.message,
+        description: error.message.includes('timeout') ? 'Request timed out. Please try again.' : error.message,
         variant: "destructive",
       })
+      // Set empty data on error to prevent infinite loading
+      setHabits([])
+      setTracking([])
     } finally {
       setIsLoading(false)
     }
@@ -260,11 +276,47 @@ export function useHabits() {
               ),
           )
 
-          return [...filtered, trackingData]
-        })
+          const newTracking = [...filtered, trackingData]
+          
+          // Update habit stats directly instead of refetching
+          setHabits((prevHabits) => {
+            return prevHabits.map((habit) => {
+              if (habit.id === trackingData.habitId) {
+                const habitTracking = newTracking.filter((t) => t.habitId === habit.id)
+                const dates = [...new Set(habitTracking.map((t) => t.date))].sort()
 
-        // Refetch habits to update stats
-        fetchHabits()
+                // Simple streak calculation
+                let streak = 0
+                if (dates.length > 0) {
+                  streak = 1
+                  for (let i = 1; i < dates.length; i++) {
+                    const prevDate = new Date(dates[i - 1])
+                    const currDate = new Date(dates[i])
+                    const diffTime = Math.abs(currDate.getTime() - prevDate.getTime())
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+                    if (diffDays === 1) {
+                      streak++
+                    } else {
+                      streak = 1
+                    }
+                  }
+                }
+
+                return {
+                  ...habit,
+                  stats: {
+                    completedDays: dates.length,
+                    streak,
+                  },
+                }
+              }
+              return habit
+            })
+          })
+
+          return newTracking
+        })
 
         toast({
           title: "Habit tracked",
@@ -278,7 +330,7 @@ export function useHabits() {
         })
       }
     },
-    [user, fetchHabits, toast],
+    [user, toast],
   )
 
   // Untrack a habit

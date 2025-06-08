@@ -38,15 +38,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check admin status from the database since JWT hooks aren't working
       if (currentUser) {
         try {
-          const { data: userRole, error } = await supabase
+          // Add timeout to admin check to prevent hanging
+          const adminPromise = supabase
             .from('user_roles')
             .select('is_admin')
             .eq('user_id', currentUser.id)
             .single()
           
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Admin check timeout')), 5000)
+          )
+          
+          const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
           const isUserAdmin = userRole?.is_admin === true
           setIsAdmin(isUserAdmin)
         } catch (error) {
+          // console.log('Admin check failed or timed out:', error)
           setIsAdmin(false)
         }
       } else {
@@ -54,13 +61,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Get initial session and set state
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      await setUserAndAdminFromSession(session)
-      setIsLoading(false)
-    }).catch(err => {
-      setIsLoading(false);
-    })
+    // Add timeout to initial session check
+    const initializeAuth = async () => {
+      try {
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        await setUserAndAdminFromSession(session)
+      } catch (err) {
+        // console.log('Auth initialization failed or timed out:', err)
+        // Set as not authenticated on timeout/error
+        setUser(null)
+        setSession(null)
+        setIsAdmin(false)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    initializeAuth()
 
     // Listen for auth state changes
     const {
