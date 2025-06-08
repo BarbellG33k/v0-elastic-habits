@@ -5,41 +5,41 @@
 
 /* Bronze level */
 .level-button-bronze {
-  @apply bg-amber-500/20 hover:bg-amber-500/90;
+  @apply bg-amber-500/20 hover:bg-amber-500/90 text-foreground;
 }
 
 .level-button-bronze.selected {
-  @apply bg-amber-500;
+  @apply bg-amber-500 text-white;
 }
 
 .level-button-bronze.disabled {
-  @apply bg-amber-500/10 cursor-not-allowed hover:bg-amber-500/10;
+  @apply bg-amber-500/10 cursor-not-allowed hover:bg-amber-500/10 text-white dark:text-black opacity-60;
 }
 
 /* Silver level */
 .level-button-silver {
-  @apply bg-slate-400/20 hover:bg-slate-400/90;
+  @apply bg-slate-400/20 hover:bg-slate-400/90 text-foreground;
 }
 
 .level-button-silver.selected {
-  @apply bg-slate-400;
+  @apply bg-slate-400 text-white;
 }
 
 .level-button-silver.disabled {
-  @apply bg-slate-400/10 cursor-not-allowed hover:bg-slate-400/10;
+  @apply bg-slate-400/10 cursor-not-allowed hover:bg-slate-400/10 text-white dark:text-black opacity-60;
 }
 
 /* Gold level */
 .level-button-gold {
-  @apply bg-yellow-400/20 hover:bg-yellow-400/90;
+  @apply bg-yellow-400/20 hover:bg-yellow-400/90 text-foreground;
 }
 
 .level-button-gold.selected {
-  @apply bg-yellow-400;
+  @apply bg-yellow-400 text-black;
 }
 
 .level-button-gold.disabled {
-  @apply bg-yellow-400/10 cursor-not-allowed hover:bg-yellow-400/10;
+  @apply bg-yellow-400/10 cursor-not-allowed hover:bg-yellow-400/10 text-white dark:text-black opacity-60;
 }
 
 /* Activity tab styles */

@@ -205,31 +205,51 @@ export default function AdminPage() {
               ) : activeUsers.length === 0 ? (
                 <p className="text-muted-foreground">No active users found in the last 30 days.</p>
               ) : (
-                <div className="space-y-4">
-                  {activeUsers.map((activeUser, index) => (
-                    <div key={activeUser.user_id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="font-mono text-sm text-muted-foreground">
-                          #{index + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium">{activeUser.full_name || 'Unknown User'}</p>
-                          <p className="text-sm text-muted-foreground">{activeUser.email}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{activeUser.total_activities} activities</p>
-                        <p className="text-sm text-muted-foreground">
-                          {activeUser.streak_days} days active
-                        </p>
-                        {activeUser.last_activity && (
-                          <p className="text-xs text-muted-foreground">
-                            Last: {new Date(activeUser.last_activity).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-semibold">Rank</th>
+                        <th className="text-left py-3 px-4 font-semibold">Name</th>
+                        <th className="text-left py-3 px-4 font-semibold">Email</th>
+                        <th className="text-right py-3 px-4 font-semibold">Activities</th>
+                        <th className="text-right py-3 px-4 font-semibold">Days Active</th>
+                        <th className="text-right py-3 px-4 font-semibold">Last Active</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeUsers.map((activeUser, index) => (
+                        <tr key={activeUser.user_id} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              {index === 0 && <span className="text-2xl">🏆</span>}
+                              {index === 1 && <span className="text-2xl">🥈</span>}
+                              {index === 2 && <span className="text-2xl">🥉</span>}
+                              <span className="font-mono text-sm font-medium">#{index + 1}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-medium">
+                            {activeUser.full_name || 'Unknown User'}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground">
+                            {activeUser.email}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold">
+                            {activeUser.total_activities}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {activeUser.streak_days}
+                          </td>
+                          <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                            {activeUser.last_activity ? 
+                              new Date(activeUser.last_activity).toLocaleDateString() : 
+                              'Never'
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>

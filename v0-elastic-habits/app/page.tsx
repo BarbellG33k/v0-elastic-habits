@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowRight, BarChart3, Calendar, CheckCircle, Plus, User } from "lucide-react"
-import { HabitProgress } from "@/components/habit-progress"
+import { HabitInsights } from "@/components/habit-insights"
 import { DailyStreak } from "@/components/daily-streak"
 import { RecentActivity } from "@/components/recent-activity"
 import { AboutSection } from "@/components/about-section"
@@ -181,33 +181,12 @@ export default function Home() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-medium flex items-center">
               <BarChart3 className="mr-2 h-5 w-5 text-purple-500" />
-              Progress
+              Insights
             </CardTitle>
-            <CardDescription>Monthly completion rate</CardDescription>
+            <CardDescription>Your activity highlights</CardDescription>
           </CardHeader>
           <CardContent>
-            <HabitProgress />
-            <div className="grid grid-cols-3 gap-2 mt-4 text-center text-sm">
-              <div>
-                <div className="font-medium">
-                  {habits.length > 0
-                    ? Math.round(
-                        (habits.reduce((sum, h) => sum + h.stats.completedDays, 0) / (habits.length * 30)) * 100,
-                      )
-                    : 0}
-                  %
-                </div>
-                <div className="text-muted-foreground">Completion</div>
-              </div>
-              <div>
-                <div className="font-medium">{habits.reduce((sum, h) => sum + h.stats.completedDays, 0)}</div>
-                <div className="text-muted-foreground">Active days</div>
-              </div>
-              <div>
-                <div className="font-medium">{habits.length}</div>
-                <div className="text-muted-foreground">Habits</div>
-              </div>
-            </div>
+            <HabitInsights />
           </CardContent>
         </Card>
       </div>
