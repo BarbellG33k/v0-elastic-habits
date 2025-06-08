@@ -15,20 +15,27 @@ export function useHabits() {
 
   // Fetch habits from Supabase
   const fetchHabits = useCallback(async () => {
+    console.log("useHabits: fetchHabits called, user:", user?.id)
+    
     if (!user) {
+      console.log("useHabits: No user, setting loading to false")
       setHabits([])
       setTracking([])
       setIsLoading(false)
       return
     }
 
+    console.log("useHabits: User exists, starting to fetch habits...")
     setIsLoading(true)
     try {
       // Fetch habits
+      console.log("useHabits: About to query habits table...")
       const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("*")
         .order("created_at", { ascending: false })
+
+      console.log("useHabits: Habits query result:", { habitsData, habitsError })
 
       if (habitsError) {
         throw habitsError
@@ -46,10 +53,13 @@ export function useHabits() {
       setHabits(transformedHabits)
 
       // Fetch tracking data
+      console.log("useHabits: About to query habit_tracking table...")
       const { data: trackingData, error: trackingError } = await supabase
         .from("habit_tracking")
         .select("*")
         .order("date", { ascending: false })
+
+      console.log("useHabits: Tracking query result:", { trackingData, trackingError })
 
       if (trackingError) {
         throw trackingError
@@ -98,6 +108,7 @@ export function useHabits() {
         }
       })
 
+      console.log("useHabits: Setting final habits:", updatedHabits)
       setHabits(updatedHabits)
     } catch (error: any) {
       console.error("Error fetching habits:", error)
@@ -107,12 +118,14 @@ export function useHabits() {
         variant: "destructive",
       })
     } finally {
+      console.log("useHabits: Setting loading to false")
       setIsLoading(false)
     }
   }, [user, toast])
 
   // Fetch data when user changes
   useEffect(() => {
+    console.log("useHabits useEffect: About to call fetchHabits")
     fetchHabits()
   }, [fetchHabits])
 
