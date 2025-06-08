@@ -9,6 +9,7 @@ import { SettingsProvider } from "@/contexts/settings-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Metadata } from 'next'
 import { EnhancedHabitReminder } from "@/components/enhanced-habit-reminder"
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -54,6 +55,7 @@ export default function RootLayout({
             </SettingsProvider>
           </AuthProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

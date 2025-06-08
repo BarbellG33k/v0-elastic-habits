@@ -100,6 +100,7 @@ export function useHabits() {
 
       setHabits(updatedHabits)
     } catch (error: any) {
+      console.error("Error fetching habits:", error)
       toast({
         title: "Error fetching data",
         description: error.message,
