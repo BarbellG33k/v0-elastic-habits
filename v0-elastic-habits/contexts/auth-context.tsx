@@ -38,11 +38,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check admin status from the database since JWT hooks aren't working
       if (currentUser) {
         try {
+          console.log(`AuthContext: Checking admin status for user ID: ${currentUser.id}`)
           const { data: userRole, error } = await supabase
             .from('user_roles')
             .select('is_admin')
             .eq('user_id', currentUser.id)
             .single()
+          
+          console.log(`AuthContext: Database query result:`, { userRole, error })
           
           const isUserAdmin = userRole?.is_admin === true
           setIsAdmin(isUserAdmin)
