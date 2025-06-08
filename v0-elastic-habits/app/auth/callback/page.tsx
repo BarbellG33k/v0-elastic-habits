@@ -29,7 +29,6 @@ export default function AuthCallbackPage() {
         // Redirect to the dashboard
         router.push("/")
       } catch (error) {
-        console.error("Error during auth callback:", error)
         router.push("/auth/sign-in?error=Authentication%20failed")
       }
     }

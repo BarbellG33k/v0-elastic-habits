@@ -27,8 +27,8 @@ image_transformation = { enabled = true }
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+site_url = "https://momentum.factor317.app"
+additional_redirect_urls = ["https://momentum.factor317.app", "https://v0-elastic-habits-app.vercel.app", "https://*.factor317.app", "http://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = true
 

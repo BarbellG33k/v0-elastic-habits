@@ -21,7 +21,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
       } catch (error) {
-        console.error('Error parsing saved settings:', error);
+        // If parsing fails, use default settings
       }
     }
   }, []);

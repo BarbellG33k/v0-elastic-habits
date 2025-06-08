@@ -38,37 +38,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check admin status from the database since JWT hooks aren't working
       if (currentUser) {
         try {
-          console.log(`AuthContext: Checking admin status for user ID: ${currentUser.id}`)
           const { data: userRole, error } = await supabase
             .from('user_roles')
             .select('is_admin')
             .eq('user_id', currentUser.id)
             .single()
           
-          console.log(`AuthContext: Database query result:`, { userRole, error })
-          
           const isUserAdmin = userRole?.is_admin === true
           setIsAdmin(isUserAdmin)
-          console.log(`AuthContext: User set. Admin status from DB: ${isUserAdmin}. isAdmin state set to: ${isUserAdmin}`)
         } catch (error) {
-          console.error('Error fetching admin status:', error)
           setIsAdmin(false)
         }
       } else {
         setIsAdmin(false)
-        console.log('AuthContext: No user, isAdmin set to false')
       }
     }
 
     // Get initial session and set state
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        console.error("Error getting initial auth session:", error);
-      }
       await setUserAndAdminFromSession(session)
       setIsLoading(false)
     }).catch(err => {
-      console.error("Exception getting initial auth session:", err);
       setIsLoading(false);
     })
 
@@ -76,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("AuthContext: Auth state changed.", _event)
       await setUserAndAdminFromSession(session)
       // No need to set isLoading here, as it's for the initial load.
       // Subsequent changes happen while the app is running.
