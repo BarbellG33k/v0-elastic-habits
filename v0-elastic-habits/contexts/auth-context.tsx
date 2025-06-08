@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check admin status from the database since JWT hooks aren't working
       if (currentUser) {
         try {
-          // Add timeout to admin check to prevent hanging
+          // Keep a reasonable timeout for admin check to prevent hanging, but longer than before
           const adminPromise = supabase
             .from('user_roles')
             .select('is_admin')
@@ -46,14 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .single()
           
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Admin check timeout')), 5000)
+            setTimeout(() => reject(new Error('Admin check timeout')), 15000)
           )
           
           const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
           const isUserAdmin = userRole?.is_admin === true
           setIsAdmin(isUserAdmin)
         } catch (error) {
-          // console.log('Admin check failed or timed out:', error)
+          console.log('Admin check failed or timed out:', error)
           setIsAdmin(false)
         }
       } else {
@@ -64,16 +64,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Add timeout to initial session check
     const initializeAuth = async () => {
       try {
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 10000)
-        )
+        // Remove aggressive timeout - let Supabase handle session checking naturally
+        const { data: { session }, error } = await supabase.auth.getSession()
         
-        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
-        await setUserAndAdminFromSession(session)
+        if (error) {
+          console.error('Session check error:', error)
+          // On error, still set not authenticated but don't throw
+          setUser(null)
+          setSession(null)
+          setIsAdmin(false)
+        } else {
+          // Process the session normally
+          await setUserAndAdminFromSession(session)
+        }
       } catch (err) {
-        // console.log('Auth initialization failed or timed out:', err)
-        // Set as not authenticated on timeout/error
+        console.error('Auth initialization failed:', err)
+        // Set as not authenticated on unexpected errors
         setUser(null)
         setSession(null)
         setIsAdmin(false)

@@ -14,10 +14,24 @@ import { SloganRotator } from "@/components/slogan-rotator"
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth()
+  
+  // Only call useHabits when we have a user
   const { habits, isLoading: habitsLoading } = useHabits()
 
+  // If auth is still loading, show loading state
+  if (authLoading) {
+    return (
+      <div className="container max-w-5xl py-6 flex justify-center items-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   // If not authenticated, show welcome screen
-  if (!authLoading && !user) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-12">
         <div className="flex flex-col items-center text-center space-y-4">
@@ -88,8 +102,8 @@ export default function Home() {
     )
   }
 
-  // Loading state
-  if (authLoading || habitsLoading) {
+  // If habits are still loading (user is authenticated), show loading state
+  if (habitsLoading) {
     return (
       <div className="container max-w-5xl py-6 flex justify-center items-center min-h-[50vh]">
         <div className="text-center">
