@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useRef } from "react"
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
@@ -17,6 +17,8 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (data: { full_name?: string; avatar_url?: string }) => Promise<void>
+  isOnline: boolean
+  usingCache: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -26,83 +28,178 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true)
+  const [usingCache, setUsingCache] = useState(false)
   const { toast } = useToast()
+  const retryCountRef = useRef(0)
+  const retryTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // --- Network status effect ---
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setIsOnline(navigator.onLine)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // --- Session cache helpers ---
+  const SESSION_CACHE_KEY = 'momentum_session_cache'
+  const saveSessionCache = (session: Session | null) => {
+    if (session) {
+      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(session))
+    } else {
+      localStorage.removeItem(SESSION_CACHE_KEY)
+    }
+  }
+  const loadSessionCache = (): Session | null => {
+    try {
+      const raw = localStorage.getItem(SESSION_CACHE_KEY)
+      if (!raw) return null
+      return JSON.parse(raw)
+    } catch {
+      return null
+    }
+  }
+
+  // --- Robust session fetch with retry ---
+  const fetchSessionWithRetry = async (maxRetries = 3, delayMs = 1000): Promise<Session | null> => {
+    let lastError: any = null
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) throw error
+        if (session) return session
+      } catch (err) {
+        lastError = err
+        await new Promise(res => setTimeout(res, delayMs))
+      }
+    }
+    throw lastError
+  }
+
+  // --- Set user/admin from session ---
+  const setUserAndAdminFromSession = async (session: Session | null) => {
+    setSession(session)
+    const currentUser = session?.user ?? null
+    setUser(currentUser)
+    saveSessionCache(session)
+    if (currentUser) {
+      try {
+        const adminPromise = supabase
+          .from('user_roles')
+          .select('is_admin')
+          .eq('user_id', currentUser.id)
+          .single()
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Admin check timeout')), 15000)
+        )
+        const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
+        const isUserAdmin = userRole?.is_admin === true
+        setIsAdmin(isUserAdmin)
+      } catch (error) {
+        setIsAdmin(false)
+      }
+    } else {
+      setIsAdmin(false)
+    }
+  }
+
+  // --- Auth initialization logic ---
+  const initializeAuth = async () => {
+    setIsLoading(true)
+    setUsingCache(false)
+    retryCountRef.current = 0
+    let session: Session | null = null
+    let cancelled = false
+    try {
+      session = await fetchSessionWithRetry(3, 1000)
+      if (!cancelled) {
+        await setUserAndAdminFromSession(session)
+      }
+    } catch (err) {
+      // If offline or network error, try cache
+      if (!isOnline) {
+        const cached = loadSessionCache()
+        if (cached) {
+          setUsingCache(true)
+          await setUserAndAdminFromSession(cached)
+          toast({
+            title: "Offline mode",
+            description: "You are offline. Using last known session.",
+            variant: "destructive",
+          })
+          return
+        }
+      }
+      // If not offline, or no cache, treat as logged out
+      setUser(null)
+      setSession(null)
+      setIsAdmin(false)
+      saveSessionCache(null)
+      if (!isOnline) {
+        toast({
+          title: "Offline",
+          description: "You are offline and no cached session is available.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Authentication error",
+          description: "Could not verify session. Please sign in again.",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      if (!cancelled) setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Set user and isAdmin state based on the session object
-    const setUserAndAdminFromSession = async (session: Session | null) => {
-      setSession(session)
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      
-      // Check admin status from the database since JWT hooks aren't working
-      if (currentUser) {
-        try {
-          // Keep a reasonable timeout for admin check to prevent hanging, but longer than before
-          const adminPromise = supabase
-            .from('user_roles')
-            .select('is_admin')
-            .eq('user_id', currentUser.id)
-            .single()
-          
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Admin check timeout')), 15000)
-          )
-          
-          const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
-          const isUserAdmin = userRole?.is_admin === true
-          setIsAdmin(isUserAdmin)
-        } catch (error) {
-          console.log('Admin check failed or timed out:', error)
-          setIsAdmin(false)
-        }
-      } else {
-        setIsAdmin(false)
-      }
+    let cancelled = false
+    // On mount, try to use cache immediately for UI
+    const cachedSession = loadSessionCache()
+    if (cachedSession) {
+      setSession(cachedSession)
+      setUser(cachedSession.user)
+      setUsingCache(true)
     }
-
-    // Add timeout to initial session check
-    const initializeAuth = async () => {
-      try {
-        // Remove aggressive timeout - let Supabase handle session checking naturally
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Session check error:', error)
-          // On error, still set not authenticated but don't throw
-          setUser(null)
-          setSession(null)
-          setIsAdmin(false)
-        } else {
-          // Process the session normally
-          await setUserAndAdminFromSession(session)
-        }
-      } catch (err) {
-        console.error('Auth initialization failed:', err)
-        // Set as not authenticated on unexpected errors
-        setUser(null)
-        setSession(null)
-        setIsAdmin(false)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     initializeAuth()
 
     // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       await setUserAndAdminFromSession(session)
-      // No need to set isLoading here, as it's for the initial load.
-      // Subsequent changes happen while the app is running.
+      setUsingCache(false)
     })
 
     return () => {
+      cancelled = true
       subscription.unsubscribe()
     }
-  }, []) // The dependency array is empty as this effect should only run once to set up listeners.
+  }, [isOnline])
+
+  // Auto-retry logic: retry session sync every 300 seconds (5 minutes) when offline or using cache
+  useEffect(() => {
+    if (!isOnline || usingCache) {
+      if (retryTimerRef.current) clearInterval(retryTimerRef.current)
+      retryTimerRef.current = setInterval(() => {
+        // Try to re-initialize auth (will use online if available)
+        initializeAuth()
+      }, 300_000) // 300 seconds = 5 minutes
+    } else {
+      if (retryTimerRef.current) {
+        clearInterval(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
+    }
+    return () => {
+      if (retryTimerRef.current) clearInterval(retryTimerRef.current)
+    }
+  }, [isOnline, usingCache])
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -222,7 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isLoading, isAdmin, signUp, signIn, signInWithGoogle, signOut, updateProfile }}
+      value={{ user, session, isLoading, isAdmin, signUp, signIn, signInWithGoogle, signOut, updateProfile, isOnline, usingCache }}
     >
       {children}
     </AuthContext.Provider>

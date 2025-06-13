@@ -2,14 +2,13 @@ import type React from "react"
 import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SettingsProvider } from "@/contexts/settings-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Metadata } from 'next'
 import { EnhancedHabitReminder } from "@/components/enhanced-habit-reminder"
 import { Analytics } from '@vercel/analytics/next'
+import { ClientLayoutShell } from "@/components/ClientLayoutShell"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -45,13 +44,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <SettingsProvider>
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
-              <EnhancedHabitReminder />
+              <ClientLayoutShell>
+                {children}
+              </ClientLayoutShell>
             </SettingsProvider>
           </AuthProvider>
         </ThemeProvider>
