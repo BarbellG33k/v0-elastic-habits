@@ -23,6 +23,21 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const ADMIN_CACHE_KEY = 'momentum_admin_status_cache_v1'
+
+function saveAdminCache(isAdmin: boolean) {
+  localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({ isAdmin, timestamp: Date.now() }))
+}
+function loadAdminCache(): { isAdmin: boolean, timestamp: number } | null {
+  try {
+    const raw = localStorage.getItem(ADMIN_CACHE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -101,8 +116,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
         const isUserAdmin = userRole?.is_admin === true
         setIsAdmin(isUserAdmin)
+        saveAdminCache(isUserAdmin)
       } catch (error) {
-        setIsAdmin(false)
+        // On DB error, use cached admin status if available
+        const cached = loadAdminCache()
+        if (cached && typeof cached.isAdmin === 'boolean') {
+          setIsAdmin(cached.isAdmin)
+          toast({
+            title: "Admin status uncertain",
+            description: "Could not verify admin status with the server. Using last known admin status.",
+            variant: "destructive",
+          })
+        } else {
+          setIsAdmin(false)
+          toast({
+            title: "Admin status lost",
+            description: "Could not verify admin status and no cached status available.",
+            variant: "destructive",
+          })
+        }
       }
     } else {
       setIsAdmin(false)

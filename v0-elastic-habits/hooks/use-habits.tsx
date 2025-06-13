@@ -6,23 +6,60 @@ import { supabase } from "@/lib/supabase"
 import type { Habit, HabitTracking } from "@/types/habit"
 import { useToast } from "./use-toast"
 
+const HABITS_CACHE_KEY = 'momentum_habits_cache_v1'
+const TRACKING_CACHE_KEY = 'momentum_tracking_cache_v1'
+const CACHE_TIMESTAMP_KEY = 'momentum_habits_cache_timestamp_v1'
+const CACHE_EXPIRY_MS = 60 * 60 * 1000 // 1 hour
+
+function saveCache(habits: Habit[], tracking: HabitTracking[]) {
+  localStorage.setItem(HABITS_CACHE_KEY, JSON.stringify(habits))
+  localStorage.setItem(TRACKING_CACHE_KEY, JSON.stringify(tracking))
+  localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString())
+}
+
+function loadCache() {
+  try {
+    const habits = JSON.parse(localStorage.getItem(HABITS_CACHE_KEY) || '[]')
+    const tracking = JSON.parse(localStorage.getItem(TRACKING_CACHE_KEY) || '[]')
+    const timestamp = parseInt(localStorage.getItem(CACHE_TIMESTAMP_KEY) || '0', 10)
+    return { habits, tracking, timestamp }
+  } catch {
+    return { habits: [], tracking: [], timestamp: 0 }
+  }
+}
+
 export function useHabits() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [tracking, setTracking] = useState<HabitTracking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [usingCache, setUsingCache] = useState(false)
   const { user } = useAuth()
   const { toast } = useToast()
 
-  // Fetch habits from Supabase
-  const fetchHabits = useCallback(async () => {
+  // Fetch habits from Supabase or cache
+  const fetchHabits = useCallback(async (forceRefresh = false) => {
     if (!user) {
       setHabits([])
       setTracking([])
       setIsLoading(false)
+      setUsingCache(false)
       return
     }
 
     setIsLoading(true)
+    setUsingCache(false)
+    const { habits: cachedHabits, tracking: cachedTracking, timestamp } = loadCache()
+    const cacheIsValid = Date.now() - timestamp < CACHE_EXPIRY_MS
+    const isActuallyOffline = typeof navigator !== 'undefined' && navigator.onLine === false
+    if (cacheIsValid && cachedHabits.length && cachedTracking.length && !forceRefresh) {
+      setHabits(cachedHabits)
+      setTracking(cachedTracking)
+      setIsLoading(false)
+      setUsingCache(false) // Not read-only, just using cache for perf
+      // Still refresh in background
+      fetchHabits(true)
+      return
+    }
     try {
       // Add timeout to prevent hanging
       const habitsPromise = supabase
@@ -111,16 +148,33 @@ export function useHabits() {
       })
 
       setHabits(updatedHabits)
+      setTracking(transformedTracking)
+      saveCache(updatedHabits, transformedTracking)
+      setUsingCache(false)
     } catch (error: any) {
-      // console.log('Habits fetch error:', error)
-      toast({
-        title: "Error fetching data",
-        description: error.message.includes('timeout') ? 'Request timed out. Please try again.' : error.message,
-        variant: "destructive",
-      })
-      // Set empty data on error to prevent infinite loading
-      setHabits([])
-      setTracking([])
+      // On error, use cache if available
+      const { habits: cachedHabits, tracking: cachedTracking, timestamp } = loadCache()
+      if (cachedHabits.length && cachedTracking.length) {
+        setHabits(cachedHabits)
+        setTracking(cachedTracking)
+        setUsingCache(true)
+        if (isActuallyOffline || (error.message && error.message.toLowerCase().includes('network'))) {
+          toast({
+            title: "Offline mode",
+            description: "Using cached habit data. Some features may be read-only.",
+            variant: "destructive",
+          })
+        }
+      } else {
+        setHabits([])
+        setTracking([])
+        setUsingCache(false)
+        toast({
+          title: "Error fetching data",
+          description: error.message.includes('timeout') ? 'Request timed out. Please try again.' : error.message,
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -437,5 +491,6 @@ export function useHabits() {
     getTrackedHabits,
     clearAllData,
     refreshHabits: fetchHabits,
+    usingCache,
   }
 }
