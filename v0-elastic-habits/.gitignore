@@ -1,1 +1,26 @@
-node_modules
+# Next.js
+.next/
+.next/cache/
+
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Jest
+coverage/
+
+# pnpm
+# pnpm-lock.yaml  # Optional: Include if you manage lockfiles per project or prefer not to version them
+
+# Misc
+*.log
+.env-*.local
