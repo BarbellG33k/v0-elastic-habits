@@ -11,6 +11,7 @@ import { AboutSection } from "@/components/about-section"
 import { useAuth } from "@/contexts/auth-context"
 import { useHabits } from "@/hooks/use-habits"
 import { SloganRotator } from "@/components/slogan-rotator"
+import HabitCard from '@/components/habit-card'
 
 export default function Home() {
   const { user, isLoading: authLoading } = useAuth()
@@ -30,36 +31,23 @@ export default function Home() {
     )
   }
 
-  // If not authenticated, show welcome screen
+  // If not authenticated, show sign in prompt
   if (!user) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-12">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Welcome to{" "}
-            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">
-              Momentum
-            </span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl">
-            Track your habits with flexibility. Define 3 different activities with 3 levels each per habit.
-          </p>
-          <div className="flex gap-4 mt-6">
-            <Button asChild size="lg">
-              <Link href="/auth/sign-in">Sign In</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/auth/sign-up">Create Account</Link>
-            </Button>
+      <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-6">
+        <header className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">
+                Elastic Habits
+              </span>
+            </h1>
+            <SloganRotator intervalMs={15000} />
           </div>
-          <Button asChild variant="link" size="lg" className="text-muted-foreground hover:text-primary">
-            <Link href="/how-to-use">
-              Show me how to use the app
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <SloganRotator />
-        </div>
+          <Link href="/auth/sign-in">
+            <Button>Sign In</Button>
+          </Link>
+        </header>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12">
           <Card>
@@ -216,6 +204,12 @@ export default function Home() {
               <RecentActivity />
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {habits.length > 0 && (
+        <div className="mt-8">
+          <HabitCard habit={habits[0]} />
         </div>
       )}
     </div>

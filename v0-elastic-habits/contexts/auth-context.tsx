@@ -199,13 +199,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(cachedSession)
       setUser(cachedSession.user)
       setUsingCache(true)
+      setIsLoading(false) // Set loading to false when using cache
     }
     initializeAuth()
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await setUserAndAdminFromSession(session)
-      setUsingCache(false)
+      if (!cancelled) {
+        await setUserAndAdminFromSession(session)
+        setUsingCache(false)
+        setIsLoading(false) // Set loading to false after auth state change
+      }
     })
 
     return () => {

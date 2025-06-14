@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase"
 import type { Habit, HabitTracking } from "@/types/habit"
 import { useToast } from "./use-toast"
 
@@ -33,12 +32,12 @@ export function useHabits() {
   const [tracking, setTracking] = useState<HabitTracking[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingCache, setUsingCache] = useState(false)
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const { toast } = useToast()
 
-  // Fetch habits from Supabase or cache
+  // Fetch habits from API or cache
   const fetchHabits = useCallback(async (forceRefresh = false) => {
-    if (!user) {
+    if (!user || !session) {
       setHabits([])
       setTracking([])
       setIsLoading(false)
@@ -51,33 +50,29 @@ export function useHabits() {
     const { habits: cachedHabits, tracking: cachedTracking, timestamp } = loadCache()
     const cacheIsValid = Date.now() - timestamp < CACHE_EXPIRY_MS
     const isActuallyOffline = typeof navigator !== 'undefined' && navigator.onLine === false
+
+    // If we have valid cache and not forcing refresh, use it
     if (cacheIsValid && cachedHabits.length && cachedTracking.length && !forceRefresh) {
       setHabits(cachedHabits)
       setTracking(cachedTracking)
       setIsLoading(false)
-      setUsingCache(false) // Not read-only, just using cache for perf
-      // Still refresh in background
-      fetchHabits(true)
+      setUsingCache(false)
       return
     }
+
     try {
-      // Add timeout to prevent hanging
-      const habitsPromise = supabase
-        .from("habits")
-        .select("*")
-        .order("created_at", { ascending: false })
+      // Fetch habits from API
+      const habitsResponse = await fetch('/api/habits', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
 
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Habits fetch timeout')), 10000)
-      )
-
-      const { data: habitsData, error: habitsError } = await Promise.race([habitsPromise, timeoutPromise]) as any
-
-      if (habitsError) {
-        throw habitsError
+      if (!habitsResponse.ok) {
+        throw new Error('Failed to fetch habits')
       }
 
-      // Transform the data to match our Habit type
+      const habitsData = await habitsResponse.json()
       const transformedHabits: Habit[] = habitsData.map((habit: any) => ({
         id: habit.id,
         name: habit.name,
@@ -88,23 +83,18 @@ export function useHabits() {
 
       setHabits(transformedHabits)
 
-      // Fetch tracking data with timeout
-      const trackingPromise = supabase
-        .from("habit_tracking")
-        .select("*")
-        .order("date", { ascending: false })
+      // Fetch tracking data from API
+      const trackingResponse = await fetch('/api/habits/tracking', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
 
-      const trackingTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tracking fetch timeout')), 10000)
-      )
-
-      const { data: trackingData, error: trackingError } = await Promise.race([trackingPromise, trackingTimeoutPromise]) as any
-
-      if (trackingError) {
-        throw trackingError
+      if (!trackingResponse.ok) {
+        throw new Error('Failed to fetch tracking data')
       }
 
-      // Transform the data to match our HabitTracking type
+      const trackingData = await trackingResponse.json()
       const transformedTracking: HabitTracking[] = trackingData.map((track: any) => ({
         habitId: track.habit_id,
         date: track.date,
@@ -178,34 +168,50 @@ export function useHabits() {
     } finally {
       setIsLoading(false)
     }
-  }, [user, toast])
+  }, [user, session, toast])
 
   // Fetch data when user changes
   useEffect(() => {
+    if (!user || !session) {
+      setHabits([])
+      setTracking([])
+      setIsLoading(false)
+      return
+    }
     fetchHabits()
-  }, [fetchHabits])
+  }, [fetchHabits, user, session])
+
+  // Set up periodic refresh
+  useEffect(() => {
+    if (!user || !session) return
+
+    const refreshInterval = setInterval(() => {
+      fetchHabits(true)
+    }, CACHE_EXPIRY_MS)
+
+    return () => clearInterval(refreshInterval)
+  }, [user, session, fetchHabits])
 
   // Add a new habit
   const addHabit = useCallback(
     async (habit: Omit<Habit, "id" | "createdAt">) => {
-      if (!user) return
+      if (!user || !session) return
 
       try {
-        const { data, error } = await supabase
-          .from("habits")
-          .insert({
-            name: habit.name,
-            activities: habit.activities,
-            user_id: user.id,
-          })
-          .select()
-          .single()
+        const response = await fetch('/api/habits', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(habit),
+        })
 
-        if (error) {
-          throw error
+        if (!response.ok) {
+          throw new Error('Failed to create habit')
         }
 
-        // Add the new habit to state
+        const data = await response.json()
         const newHabit: Habit = {
           id: data.id,
           name: data.name,
@@ -228,25 +234,26 @@ export function useHabits() {
         })
       }
     },
-    [user, toast],
+    [user, session, toast],
   )
 
   // Update an existing habit
   const updateHabit = useCallback(
     async (updatedHabit: Habit) => {
-      if (!user) return
+      if (!user || !session) return
 
       try {
-        const { error } = await supabase
-          .from("habits")
-          .update({
-            name: updatedHabit.name,
-            activities: updatedHabit.activities,
-          })
-          .eq("id", updatedHabit.id)
+        const response = await fetch(`/api/habits/${updatedHabit.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(updatedHabit),
+        })
 
-        if (error) {
-          throw error
+        if (!response.ok) {
+          throw new Error('Failed to update habit')
         }
 
         // Update the habit in state
@@ -264,19 +271,24 @@ export function useHabits() {
         })
       }
     },
-    [user, toast],
+    [user, session, toast],
   )
 
   // Delete a habit
   const deleteHabit = useCallback(
     async (habitId: string) => {
-      if (!user) return
+      if (!user || !session) return
 
       try {
-        const { error } = await supabase.from("habits").delete().eq("id", habitId)
+        const response = await fetch(`/api/habits/${habitId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        })
 
-        if (error) {
-          throw error
+        if (!response.ok) {
+          throw new Error('Failed to delete habit')
         }
 
         // Remove the habit from state
@@ -295,26 +307,26 @@ export function useHabits() {
         })
       }
     },
-    [user, toast],
+    [user, session, toast],
   )
 
   // Track a habit
   const trackHabit = useCallback(
     async (trackingData: Omit<HabitTracking, "id">) => {
-      if (!user) return
+      if (!user || !session) return
 
       try {
-        const { error } = await supabase.from("habit_tracking").upsert({
-          habit_id: trackingData.habitId,
-          user_id: user.id,
-          date: trackingData.date,
-          activity_index: trackingData.activityIndex,
-          level_index: trackingData.levelIndex,
-          timestamp: new Date().toISOString(),
+        const response = await fetch('/api/habits/tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(trackingData),
         })
 
-        if (error) {
-          throw error
+        if (!response.ok) {
+          throw new Error('Failed to track habit')
         }
 
         // Update tracking in state
@@ -384,27 +396,31 @@ export function useHabits() {
         })
       }
     },
-    [user, toast],
+    [user, session, toast],
   )
 
   // Untrack a habit
   const untrackHabit = useCallback(
     async (habitId: string, date: string, activityIndex: number, levelIndex: number) => {
-      if (!user) return
+      if (!user || !session) return
 
       try {
-        const { error } = await supabase
-          .from("habit_tracking")
-          .delete()
-          .match({
-            habit_id: habitId,
-            date: date,
-            activity_index: activityIndex,
-            level_index: levelIndex,
-          })
+        const response = await fetch('/api/habits/tracking', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            habitId,
+            date,
+            activityIndex,
+            levelIndex,
+          }),
+        })
 
-        if (error) {
-          throw error
+        if (!response.ok) {
+          throw new Error('Failed to untrack habit')
         }
 
         // Remove the tracking from state
@@ -432,7 +448,7 @@ export function useHabits() {
         })
       }
     },
-    [user, toast],
+    [user, session, toast],
   )
 
   // Get tracked habits for a specific date
@@ -445,21 +461,18 @@ export function useHabits() {
 
   // Clear all data
   const clearAllData = useCallback(async () => {
-    if (!user) return
+    if (!user || !session) return
 
     try {
-      // Delete all habit tracking
-      const { error: trackingError } = await supabase.from("habit_tracking").delete().eq("user_id", user.id)
+      const response = await fetch('/api/habits/clear', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
 
-      if (trackingError) {
-        throw trackingError
-      }
-
-      // Delete all habits
-      const { error: habitsError } = await supabase.from("habits").delete().eq("user_id", user.id)
-
-      if (habitsError) {
-        throw habitsError
+      if (!response.ok) {
+        throw new Error('Failed to clear data')
       }
 
       // Clear state
@@ -477,7 +490,7 @@ export function useHabits() {
         variant: "destructive",
       })
     }
-  }, [user, toast])
+  }, [user, session, toast])
 
   return {
     habits,

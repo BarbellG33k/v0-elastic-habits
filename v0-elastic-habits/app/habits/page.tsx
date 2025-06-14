@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { HabitCard } from "@/components/habit-card"
+import HabitCard from "@/components/habit-card"
 import { Plus, Save } from "lucide-react"
 import { useHabits } from "@/hooks/use-habits"
 import { useAuth } from "@/contexts/auth-context"
@@ -24,6 +24,7 @@ export default function HabitsPage() {
     ],
   })
   const [editingHabit, setEditingHabit] = useState<string | null>(null)
+  const [tabValue, setTabValue] = useState("current")
 
   const handleActivityChange = (index: number, value: string) => {
     const updated = { ...newHabit }
@@ -70,8 +71,7 @@ export default function HabitsPage() {
       name: habit.name,
       activities: habit.activities,
     })
-    // Switch to add tab
-    document.querySelector('[data-value="add"]')?.click()
+    setTabValue("add")
   }
 
   const handleUpdate = () => {
@@ -97,7 +97,8 @@ export default function HabitsPage() {
     })
 
     // Switch back to current tab
-    document.querySelector('[data-value="current"]')?.click()
+    const currentTab = document.querySelector('[data-value="current"]') as HTMLElement;
+    currentTab?.click();
   }
 
   const handleCancel = () => {
@@ -110,12 +111,29 @@ export default function HabitsPage() {
         { name: "", levels: ["", "", ""] },
       ],
     })
+    setTabValue("current")
+  }
+
+  const handleTabChange = (value: string) => {
+    if (value === "current" && editingHabit) {
+      // Cancel edit mode when switching to current tab
+      setEditingHabit(null)
+      setNewHabit({
+        name: "",
+        activities: [
+          { name: "", levels: ["", "", ""] },
+          { name: "", levels: ["", "", ""] },
+          { name: "", levels: ["", "", ""] },
+        ],
+      })
+    }
+    setTabValue(value)
   }
 
   // If not authenticated, redirect to sign in
   if (!user) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 py-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground mb-4">Please sign in to manage your habits</p>
@@ -144,7 +162,7 @@ export default function HabitsPage() {
     <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-6">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Manage Habits</h1>
 
-      <Tabs defaultValue="current">
+      <Tabs value={tabValue} onValueChange={handleTabChange} defaultValue="current">
         <TabsList className="mb-4">
           <TabsTrigger value="current">Current Habits</TabsTrigger>
           <TabsTrigger value="add">{editingHabit ? "Edit Habit" : "Add New Habit"}</TabsTrigger>
@@ -154,7 +172,10 @@ export default function HabitsPage() {
           {habits.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">You don't have any habits yet</p>
-              <Button onClick={() => document.querySelector('[data-value="add"]')?.click()}>
+              <Button onClick={() => {
+                const addTab = document.querySelector('[data-value="add"]') as HTMLElement;
+                addTab?.click();
+              }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Habit
               </Button>
@@ -162,7 +183,12 @@ export default function HabitsPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {habits.map((habit) => (
-                <HabitCard key={habit.id} habit={habit} onEdit={handleEdit} onDelete={deleteHabit} />
+                <HabitCard 
+                  key={habit.id} 
+                  habit={habit}
+                  onEdit={handleEdit} 
+                  onDelete={deleteHabit} 
+                />
               ))}
             </div>
           )}
