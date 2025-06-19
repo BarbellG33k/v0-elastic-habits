@@ -130,7 +130,7 @@ export default function Home() {
               <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
               Habits Overview
             </CardTitle>
-            <CardDescription>Your active habits</CardDescription>
+            <CardDescription>Your active habits <span className="text-xs opacity-75">*365 days</span></CardDescription>
           </CardHeader>
           <CardContent>
             {habits.length === 0 ? (
@@ -145,12 +145,18 @@ export default function Home() {
               </div>
             ) : (
               <div className="space-y-3">
-                {habits.slice(0, 3).map((habit) => (
-                  <div key={habit.id} className="flex justify-between items-center">
-                    <span className="font-medium">{habit.name}</span>
-                    <span className="text-sm text-muted-foreground">{habit.stats.completedDays} days</span>
-                  </div>
-                ))}
+                {habits.slice(0, 3).map((habit) => {
+                  // Calculate completed days using 365-day streaks data
+                  const habitTracking = streaksTracking.filter(t => t.habitId === habit.id)
+                  const uniqueDays = new Set(habitTracking.map(t => t.date)).size
+                  
+                  return (
+                    <div key={habit.id} className="flex justify-between items-center">
+                      <span className="font-medium">{habit.name}</span>
+                      <span className="text-sm text-muted-foreground">{uniqueDays} days</span>
+                    </div>
+                  )
+                })}
                 <Link href="/habits">
                   <Button variant="outline" className="w-full mt-2">
                     <Plus className="mr-2 h-4 w-4" />
