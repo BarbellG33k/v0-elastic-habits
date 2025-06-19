@@ -32,7 +32,7 @@ export function useHabits() {
   const [tracking, setTracking] = useState<HabitTracking[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingCache, setUsingCache] = useState(false)
-  const { user, session } = useAuth()
+  const { user, session, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
 
   // Fetch habits from API or cache
@@ -168,18 +168,18 @@ export function useHabits() {
     } finally {
       setIsLoading(false)
     }
-  }, [user, session, toast])
+  }, [toast])
 
   // Fetch data when user changes
   useEffect(() => {
-    if (!user || !session) {
+    if (!user || !session || authLoading) {
       setHabits([])
       setTracking([])
       setIsLoading(false)
       return
     }
     fetchHabits()
-  }, [fetchHabits, user, session])
+  }, [fetchHabits, user, session, authLoading])
 
   // Set up periodic refresh
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,8 @@ import Link from "next/link"
 
 export default function HabitsPage() {
   const { habits, addHabit, updateHabit, deleteHabit, isLoading } = useHabits()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
+  const router = useRouter()
   const [newHabit, setNewHabit] = useState({
     name: "",
     activities: [
@@ -130,18 +132,33 @@ export default function HabitsPage() {
     setTabValue(value)
   }
 
-  // If not authenticated, redirect to sign in
+  // Handle redirect for unauthenticated users
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/sign-in')
+    }
+  }, [user, authLoading, router])
+
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="container max-w-5xl py-6 flex justify-center items-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated, show loading (redirect will happen)
   if (!user) {
     return (
-      <div className="container mx-auto px-4 sm:px-6">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground mb-4">Please sign in to manage your habits</p>
-            <Button asChild>
-              <Link href="/auth/sign-in">Sign In</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="container max-w-5xl py-6 flex justify-center items-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Redirecting...</p>
+        </div>
       </div>
     )
   }
