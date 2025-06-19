@@ -6,11 +6,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,18 +20,17 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const { data: habit, error } = await supabase
-      .from('habits')
+    const { data: tracking, error } = await supabase
+      .from('habit_tracking')
       .select('*')
-      .eq('id', id)
       .eq('user_id', user.id)
-      .single();
+      .order('timestamp', { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return NextResponse.json(habit);
+    return NextResponse.json(tracking);
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'An error occurred' },
@@ -44,11 +39,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -63,23 +54,36 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, activities } = body;
+    const { habitId, date, activityIndex, levelIndex, timestamp } = body;
 
     // Validate required fields
-    if (!name || !activities) {
+    if (!habitId || !date || activityIndex === undefined || levelIndex === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Update habit
-    const { data: habit, error } = await supabase
+    // Check if habit belongs to user
+    const { data: habit, error: habitError } = await supabase
       .from('habits')
-      .update({
-        name,
-        activities,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
+      .select('id')
+      .eq('id', habitId)
       .eq('user_id', user.id)
+      .single();
+
+    if (habitError || !habit) {
+      return NextResponse.json({ error: 'Habit not found or unauthorized' }, { status: 404 });
+    }
+
+    // Insert or update tracking record
+    const { data: tracking, error } = await supabase
+      .from('habit_tracking')
+      .upsert({
+        habit_id: habitId,
+        user_id: user.id,
+        date,
+        activity_index: activityIndex,
+        level_index: levelIndex,
+        timestamp: timestamp || new Date().toISOString(),
+      })
       .select()
       .single();
 
@@ -87,7 +91,7 @@ export async function PUT(
       throw error;
     }
 
-    return NextResponse.json(habit);
+    return NextResponse.json(tracking);
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'An error occurred' },
@@ -96,11 +100,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function DELETE(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -114,12 +114,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Delete habit
+    const body = await req.json();
+    const { habitId, date, activityIndex, levelIndex } = body;
+
+    // Validate required fields
+    if (!habitId || !date || activityIndex === undefined || levelIndex === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Delete tracking record
     const { error } = await supabase
-      .from('habits')
+      .from('habit_tracking')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('habit_id', habitId)
+      .eq('user_id', user.id)
+      .eq('date', date)
+      .eq('activity_index', activityIndex)
+      .eq('level_index', levelIndex);
 
     if (error) {
       throw error;
