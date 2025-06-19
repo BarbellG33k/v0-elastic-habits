@@ -20,9 +20,13 @@ export function RecentActivity() {
   useEffect(() => {
     if (!habits.length || !tracking.length) return
 
-    // Get the most recent tracking entries
+    // Get the most recent tracking entries sorted by activity date, then timestamp as tiebreaker
     const sortedTracking = [...tracking]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .sort((a, b) => {
+        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime()
+        if (dateComparison !== 0) return dateComparison
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      })
       .slice(0, 10) // Get the 10 most recent entries
 
     // Map tracking data to include habit details

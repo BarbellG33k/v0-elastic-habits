@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
     const { data: tracking, error } = await supabase
       .from('habit_tracking')
       .select('*')
-      .order('timestamp', { ascending: false });
+      .order('timestamp', { ascending: false })
+      .limit(20);
 
     if (error) {
       throw error;
