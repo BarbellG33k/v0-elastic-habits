@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -14,8 +9,21 @@ export async function GET(req: NextRequest) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -23,7 +31,6 @@ export async function GET(req: NextRequest) {
     const { data: tracking, error } = await supabase
       .from('habit_tracking')
       .select('*')
-      .eq('user_id', user.id)
       .order('timestamp', { ascending: false });
 
     if (error) {
@@ -47,8 +54,21 @@ export async function POST(req: NextRequest) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -66,7 +86,6 @@ export async function POST(req: NextRequest) {
       .from('habits')
       .select('id')
       .eq('id', habitId)
-      .eq('user_id', user.id)
       .single();
 
     if (habitError || !habit) {
@@ -108,8 +127,21 @@ export async function DELETE(req: NextRequest) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -127,7 +159,6 @@ export async function DELETE(req: NextRequest) {
       .from('habit_tracking')
       .delete()
       .eq('habit_id', habitId)
-      .eq('user_id', user.id)
       .eq('date', date)
       .eq('activity_index', activityIndex)
       .eq('level_index', levelIndex);

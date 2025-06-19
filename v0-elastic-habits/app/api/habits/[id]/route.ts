@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,8 +13,21 @@ export async function GET(
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -28,7 +36,6 @@ export async function GET(
       .from('habits')
       .select('*')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single();
 
     if (error) {
@@ -56,8 +63,21 @@ export async function PUT(
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -79,7 +99,6 @@ export async function PUT(
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .eq('user_id', user.id)
       .select()
       .single();
 
@@ -108,8 +127,21 @@ export async function DELETE(
   const token = authHeader.split(' ')[1];
 
   try {
-    // Get user ID from token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create supabase client with the user's auth token
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
+    // Get the user to validate the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -118,8 +150,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('habits')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('id', id);
 
     if (error) {
       throw error;

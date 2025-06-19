@@ -104,38 +104,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(currentUser)
     saveSessionCache(session)
     if (currentUser) {
-      try {
-        const adminPromise = supabase
-          .from('user_roles')
-          .select('is_admin')
-          .eq('user_id', currentUser.id)
-          .single()
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Admin check timeout')), 15000)
-        )
-        const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
-        const isUserAdmin = userRole?.is_admin === true
-        setIsAdmin(isUserAdmin)
-        saveAdminCache(isUserAdmin)
-      } catch (error) {
-        // On DB error, use cached admin status if available
-        const cached = loadAdminCache()
-        if (cached && typeof cached.isAdmin === 'boolean') {
-          setIsAdmin(cached.isAdmin)
-          toast({
-            title: "Admin status uncertain",
-            description: "Could not verify admin status with the server. Using last known admin status.",
-            variant: "destructive",
-          })
-        } else {
-          setIsAdmin(false)
-          toast({
-            title: "Admin status lost",
-            description: "Could not verify admin status and no cached status available.",
-            variant: "destructive",
-          })
-        }
+      // Temporarily disable admin check to prevent infinite loading
+      // Check cached admin status first
+      const cached = loadAdminCache()
+      if (cached && typeof cached.isAdmin === 'boolean') {
+        setIsAdmin(cached.isAdmin)
+      } else {
+        setIsAdmin(false)
       }
+      
+      // Try admin check in background without blocking the UI
+      setTimeout(async () => {
+        try {
+          const adminPromise = supabase
+            .from('user_roles')
+            .select('is_admin')
+            .eq('user_id', currentUser.id)
+            .single()
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Admin check timeout')), 5000)
+          )
+          const { data: userRole } = await Promise.race([adminPromise, timeoutPromise]) as any
+          const isUserAdmin = userRole?.is_admin === true
+          setIsAdmin(isUserAdmin)
+          saveAdminCache(isUserAdmin)
+        } catch (error) {
+          // Silently fail - we already set a default value above
+          console.log('Admin check failed:', error)
+        }
+      }, 100)
     } else {
       setIsAdmin(false)
     }
