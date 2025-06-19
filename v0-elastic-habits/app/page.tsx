@@ -206,12 +206,6 @@ export default function Home() {
           </Card>
         </div>
       )}
-
-      {habits.length > 0 && (
-        <div className="mt-8">
-          <HabitCard habit={habits[0]} />
-        </div>
-      )}
     </div>
   )
 }
