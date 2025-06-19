@@ -54,3 +54,16 @@
     * A `ReminderSettings` component (or similarly named) is available on the user settings page.
     * Users can enable/disable reminders and configure the reminder time via these settings.
     * Reminder settings are persisted (e.g., in `localStorage`).
+
+### 1.5. Optimized Data Retrieval Strategy
+
+* **Requirement:** Implement separate API endpoints for different data use cases to optimize performance and ensure accurate calculations for streaks, insights, and recent activity.
+* **Implementation Details:**
+    * **Recent Activity Endpoint** (`/api/habits/tracking`): Limited to 20 most recent records for dashboard display
+    * **Insights Endpoint** (`/api/habits/tracking/insights`): Fetches 90 days of data for activity pattern analysis
+    * **Streaks Endpoint** (`/api/habits/tracking/streaks`): Fetches 365 days of data for accurate streak calculations
+    * **Client-side Hooks**: Separate hooks (`useInsights()`, `useStreaks()`) for different data types
+    * **Performance Optimization**: Reduced data transfer, faster load times, and scalable architecture
+    * **User Transparency**: Clear indicators showing data periods (e.g., "*90 days", "*365 days")
+    * **Caching Strategy**: Different cache TTL for different data types (30 minutes for insights, 1 hour for others)
+    * **Sorting Enhancement**: Recent Activity sorted by activity date with timestamp tiebreaker

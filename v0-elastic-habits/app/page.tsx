@@ -10,6 +10,7 @@ import { RecentActivity } from "@/components/recent-activity"
 import { AboutSection } from "@/components/about-section"
 import { useAuth } from "@/contexts/auth-context"
 import { useHabits } from "@/hooks/use-habits"
+import { useStreaks } from "@/hooks/use-streaks"
 import { SloganRotator } from "@/components/slogan-rotator"
 import HabitCard from '@/components/habit-card'
 
@@ -18,6 +19,7 @@ export default function Home() {
   
   // Only call useHabits when we have a user
   const { habits, isLoading: habitsLoading } = useHabits()
+  const { streaksTracking } = useStreaks()
 
   // If auth is still loading, show loading state
   if (authLoading) {
@@ -172,9 +174,42 @@ export default function Home() {
             <DailyStreak />
             <div className="mt-4 text-center">
               <div className="text-2xl font-bold">
-                {habits.length > 0 ? Math.max(...habits.map((h) => h.stats.streak)) : 0} Days
+                {(() => {
+                  if (habits.length === 0 || streaksTracking.length === 0) return 0;
+                  
+                  // Calculate the maximum streak across all habits using streaks data
+                  const habitStreaks = habits.map(habit => {
+                    const habitTracking = streaksTracking.filter(t => t.habitId === habit.id)
+                    const dates = [...new Set(habitTracking.map(t => t.date))].sort()
+                    
+                    let maxStreak = 0
+                    let currentStreak = 0
+                    
+                    for (let i = dates.length - 1; i >= 0; i--) {
+                      if (i === dates.length - 1) {
+                        currentStreak = 1
+                      } else {
+                        const prevDate = new Date(dates[i + 1])
+                        const currDate = new Date(dates[i])
+                        const diffTime = Math.abs(prevDate.getTime() - currDate.getTime())
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                        
+                        if (diffDays === 1) {
+                          currentStreak++
+                        } else {
+                          maxStreak = Math.max(maxStreak, currentStreak)
+                          currentStreak = 1
+                        }
+                      }
+                    }
+                    
+                    return Math.max(maxStreak, currentStreak)
+                  })
+                  
+                  return Math.max(...habitStreaks, 0)
+                })()} Days
               </div>
-              <div className="text-sm text-muted-foreground">Current streak</div>
+              <div className="text-sm text-muted-foreground">Current streak <span className="text-xs opacity-75">*365 days</span></div>
             </div>
           </CardContent>
         </Card>
@@ -185,7 +220,7 @@ export default function Home() {
               <BarChart3 className="mr-2 h-5 w-5 text-purple-500" />
               Insights
             </CardTitle>
-            <CardDescription>Your activity highlights</CardDescription>
+            <CardDescription>Your activity highlights <span className="text-xs opacity-75">*90 days</span></CardDescription>
           </CardHeader>
           <CardContent>
             <HabitInsights />
@@ -198,7 +233,7 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your habit completions in the last 7 days</CardDescription>
+              <CardDescription>Your habit completions <span className="text-xs opacity-75">*20 most recent</span></CardDescription>
             </CardHeader>
             <CardContent>
               <RecentActivity />

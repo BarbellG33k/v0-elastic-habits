@@ -1,6 +1,7 @@
 "use client"
 
 import { useHabits } from "@/hooks/use-habits"
+import { useInsights } from "@/hooks/use-insights"
 import { Trophy } from "lucide-react"
 import type { Habit, HabitTracking } from "@/types/habit"
 
@@ -12,15 +13,11 @@ interface ActivityInsight {
 }
 
 export function HabitInsights() {
-  const { habits, tracking } = useHabits()
+  const { habits } = useHabits()
+  const { insightsTracking } = useInsights()
 
-  // Calculate active days in the last 30 days
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  
-  const recentTracking = tracking.filter(t => 
-    new Date(t.date) >= thirtyDaysAgo
-  )
+  // Use insights tracking data (last 90 days)
+  const recentTracking = insightsTracking
   
   const activeDays = new Set(recentTracking.map(t => t.date)).size
 
@@ -82,7 +79,7 @@ export function HabitInsights() {
       {/* Active Days */}
       <div className="text-center">
         <div className="text-xl font-bold">{activeDays}</div>
-        <div className="text-xs text-muted-foreground">Active days (30d)</div>
+        <div className="text-xs text-muted-foreground">Active days (90d)</div>
       </div>
 
       {/* Gold Achievements */}
@@ -91,7 +88,7 @@ export function HabitInsights() {
           <div className="flex items-start justify-center space-x-2">
             <Trophy className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
             <span className="font-semibold text-yellow-700 dark:text-yellow-300 text-sm leading-tight">
-              {totalGoldCount} Gold achievements this month!
+              {totalGoldCount} Gold achievements (90d)!
             </span>
           </div>
         </div>
@@ -99,7 +96,7 @@ export function HabitInsights() {
 
       {/* Top 3 Activities */}
       <div className="space-y-2">
-        <h4 className="font-medium text-sm text-muted-foreground">Top Activities (30d)</h4>
+        <h4 className="font-medium text-sm text-muted-foreground">Top Activities (90d)</h4>
         {topActivities.length === 0 ? (
           <p className="text-sm text-muted-foreground italic">No activities tracked yet</p>
         ) : (
