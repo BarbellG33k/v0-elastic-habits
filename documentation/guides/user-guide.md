@@ -62,6 +62,16 @@ Different sections of the dashboard use different time periods to provide the mo
 
 This approach ensures optimal performance while providing accurate insights into your habit patterns.
 
+#### Authentication and Loading Timeouts
+
+The application includes built-in timeout protection to ensure a responsive user experience:
+
+- **Authentication timeout**: If session verification takes longer than 5 seconds, you'll be automatically redirected to the public landing page
+- **Data loading timeout**: If habit data cannot be loaded within 5 seconds, you'll see an error message and can try again
+- **Graceful fallbacks**: The app uses cached data when possible to provide immediate access even during network issues
+
+These timeouts prevent the application from "spinning" indefinitely and ensure you always see content within 5 seconds.
+
 ## Settings
 
 ### Notifications

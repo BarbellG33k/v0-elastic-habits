@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import type { Habit, HabitTracking } from "@/types/habit"
 import { useToast } from "./use-toast"
+import { useDataRefresh } from "@/contexts/data-refresh-context"
 
 const HABITS_CACHE_KEY = 'momentum_habits_cache_v1'
 const TRACKING_CACHE_KEY = 'momentum_tracking_cache_v1'
@@ -34,6 +35,7 @@ export function useHabits() {
   const [usingCache, setUsingCache] = useState(false)
   const { user, session, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
+  const { triggerRefresh } = useDataRefresh()
 
   // Fetch habits from API or cache
   const fetchHabits = useCallback(async (forceRefresh = false) => {
@@ -61,12 +63,19 @@ export function useHabits() {
     }
 
     try {
-      // Fetch habits from API
-      const habitsResponse = await fetch('/api/habits', {
+      // Create timeout promise for habit data fetching
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Habits fetch timeout')), 5000)
+      })
+
+      // Fetch habits from API with timeout
+      const habitsPromise = fetch('/api/habits', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       })
+
+      const habitsResponse = await Promise.race([habitsPromise, timeoutPromise])
 
       if (!habitsResponse.ok) {
         throw new Error('Failed to fetch habits')
@@ -83,12 +92,14 @@ export function useHabits() {
 
       setHabits(transformedHabits)
 
-      // Fetch tracking data from API
-      const trackingResponse = await fetch('/api/habits/tracking', {
+      // Fetch tracking data from API with timeout
+      const trackingPromise = fetch('/api/habits/tracking', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       })
+
+      const trackingResponse = await Promise.race([trackingPromise, timeoutPromise])
 
       if (!trackingResponse.ok) {
         throw new Error('Failed to fetch tracking data')
@@ -159,11 +170,19 @@ export function useHabits() {
         setHabits([])
         setTracking([])
         setUsingCache(false)
-        toast({
-          title: "Error fetching data",
-          description: error.message.includes('timeout') ? 'Request timed out. Please try again.' : error.message,
-          variant: "destructive",
-        })
+        if (error.message === 'Habits fetch timeout') {
+          toast({
+            title: "Data fetch timeout",
+            description: "Could not load habits within 5 seconds. Please try again.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error fetching data",
+            description: error.message.includes('timeout') ? 'Request timed out. Please try again.' : error.message,
+            variant: "destructive",
+          })
+        }
       }
     } finally {
       setIsLoading(false)
@@ -384,6 +403,22 @@ export function useHabits() {
           return newTracking
         })
 
+        // Update cache with new tracking data
+        const currentHabits = habits
+        const updatedTracking = [...tracking.filter(
+          (t) =>
+            !(
+              t.habitId === trackingData.habitId &&
+              t.date === trackingData.date &&
+              t.activityIndex === trackingData.activityIndex &&
+              t.levelIndex === trackingData.levelIndex
+            ),
+        ), trackingData]
+        saveCache(currentHabits, updatedTracking)
+
+        // Refresh insights and streaks data to reflect the new tracking
+        triggerRefresh()
+
         toast({
           title: "Habit tracked",
           description: "Your progress has been saved",
@@ -424,8 +459,8 @@ export function useHabits() {
         }
 
         // Remove the tracking from state
-        setTracking((prev) =>
-          prev.filter(
+        setTracking((prev) => {
+          const updatedTracking = prev.filter(
             (t) =>
               !(
                 t.habitId === habitId &&
@@ -433,8 +468,16 @@ export function useHabits() {
                 t.activityIndex === activityIndex &&
                 t.levelIndex === levelIndex
               ),
-          ),
-        )
+          )
+          
+          // Update cache with removed tracking data
+          saveCache(habits, updatedTracking)
+          
+          return updatedTracking
+        })
+
+        // Refresh insights and streaks data to reflect the removed tracking
+        triggerRefresh()
 
         toast({
           title: "Habit untracked",

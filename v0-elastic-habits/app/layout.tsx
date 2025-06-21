@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SettingsProvider } from "@/contexts/settings-context"
+import { DataRefreshProvider } from "@/contexts/data-refresh-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Metadata } from 'next'
 import { EnhancedHabitReminder } from "@/components/enhanced-habit-reminder"
@@ -44,9 +45,11 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <SettingsProvider>
-              <ClientLayoutShell>
-                {children}
-              </ClientLayoutShell>
+              <DataRefreshProvider>
+                <ClientLayoutShell>
+                  {children}
+                </ClientLayoutShell>
+              </DataRefreshProvider>
             </SettingsProvider>
           </AuthProvider>
         </ThemeProvider>

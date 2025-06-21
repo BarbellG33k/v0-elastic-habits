@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import type { HabitTracking } from "@/types/habit"
 import { useToast } from "./use-toast"
+import { useDataRefresh } from "@/contexts/data-refresh-context"
 
 const INSIGHTS_CACHE_KEY = 'momentum_insights_cache_v1'
 const INSIGHTS_CACHE_TIMESTAMP_KEY = 'momentum_insights_cache_timestamp_v1'
@@ -29,6 +30,7 @@ export function useInsights() {
   const [isLoading, setIsLoading] = useState(true)
   const { user, session, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
+  const { registerRefreshFunctions } = useDataRefresh()
 
   // Fetch insights data (last 90 days)
   const fetchInsights = useCallback(async (forceRefresh = false) => {
@@ -50,11 +52,18 @@ export function useInsights() {
     }
 
     try {
-      const response = await fetch('/api/habits/tracking/insights', {
+      // Create timeout promise for insights data fetching
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Insights fetch timeout')), 5000)
+      })
+
+      const fetchPromise = fetch('/api/habits/tracking/insights', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       })
+
+      const response = await Promise.race([fetchPromise, timeoutPromise])
 
       if (!response.ok) {
         throw new Error('Failed to fetch insights data')
@@ -78,11 +87,19 @@ export function useInsights() {
         setInsightsTracking(cachedTracking)
       } else {
         setInsightsTracking([])
-        toast({
-          title: "Error fetching insights data",
-          description: error.message,
-          variant: "destructive",
-        })
+        if (error.message === 'Insights fetch timeout') {
+          toast({
+            title: "Insights fetch timeout",
+            description: "Could not load insights within 5 seconds. Please try again.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error fetching insights data",
+            description: error.message,
+            variant: "destructive",
+          })
+        }
       }
     } finally {
       setIsLoading(false)
@@ -98,6 +115,17 @@ export function useInsights() {
     }
     fetchInsights()
   }, [fetchInsights, user, session, authLoading])
+
+  // Register refresh function for global coordination
+  useEffect(() => {
+    const refreshInsightsGlobal = () => {
+      // Clear cache to force fresh data
+      localStorage.removeItem(INSIGHTS_CACHE_KEY)
+      localStorage.removeItem(INSIGHTS_CACHE_TIMESTAMP_KEY)
+      fetchInsights(true)
+    }
+    registerRefreshFunctions({ refreshInsights: refreshInsightsGlobal })
+  }, [fetchInsights, registerRefreshFunctions])
 
   return {
     insightsTracking,

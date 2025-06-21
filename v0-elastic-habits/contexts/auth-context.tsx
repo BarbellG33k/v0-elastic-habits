@@ -138,19 +138,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // --- Auth initialization logic ---
+  // --- Auth initialization logic with 5-second timeout ---
   const initializeAuth = async () => {
     setIsLoading(true)
     setUsingCache(false)
     retryCountRef.current = 0
     let session: Session | null = null
     let cancelled = false
+    
     try {
-      session = await fetchSessionWithRetry(3, 1000)
+      // Create a timeout promise that rejects after 5 seconds
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Authentication timeout')), 5000)
+      })
+      
+      // Race the session fetch against the timeout
+      const sessionPromise = fetchSessionWithRetry(2, 1000) // Reduced retries to fit within 5 seconds
+      
+      session = await Promise.race([sessionPromise, timeoutPromise])
+      
       if (!cancelled) {
         await setUserAndAdminFromSession(session)
       }
     } catch (err) {
+      console.log('Auth initialization error:', err)
+      
       // If offline or network error, try cache
       if (!isOnline) {
         const cached = loadSessionCache()
@@ -165,15 +177,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
       }
+      
       // If not offline, or no cache, treat as logged out
       setUser(null)
       setSession(null)
       setIsAdmin(false)
       saveSessionCache(null)
+      
       if (!isOnline) {
         toast({
           title: "Offline",
           description: "You are offline and no cached session is available.",
+          variant: "destructive",
+        })
+      } else if (err instanceof Error && err.message === 'Authentication timeout') {
+        toast({
+          title: "Authentication timeout",
+          description: "Could not verify session within 5 seconds. Showing public page.",
           variant: "destructive",
         })
       } else {
@@ -190,6 +210,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
+    let timeoutId: NodeJS.Timeout | null = null
+    
     // On mount, try to use cache immediately for UI
     const cachedSession = loadSessionCache()
     if (cachedSession) {
@@ -198,11 +220,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUsingCache(true)
       setIsLoading(false) // Set loading to false when using cache
     }
+    
+    // Set a hard timeout to ensure we don't spin forever
+    timeoutId = setTimeout(() => {
+      if (!cancelled && isLoading) {
+        console.log('Auth initialization timeout - forcing to unauthenticated state')
+        setUser(null)
+        setSession(null)
+        setIsAdmin(false)
+        setIsLoading(false)
+        setUsingCache(false)
+        toast({
+          title: "Authentication timeout",
+          description: "Could not verify session within 5 seconds. Showing public page.",
+          variant: "destructive",
+        })
+      }
+    }, 5000)
+    
     initializeAuth()
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!cancelled) {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
         await setUserAndAdminFromSession(session)
         setUsingCache(false)
         setIsLoading(false) // Set loading to false after auth state change
@@ -211,6 +255,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
       subscription.unsubscribe()
     }
   }, [isOnline])

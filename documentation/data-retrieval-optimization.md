@@ -107,6 +107,32 @@ This transparency helps users understand what data they're seeing and builds tru
 - Monitor cache hit rates
 - Analyze user engagement with different data periods
 
+## Data Refresh Coordination
+
+### Automatic Refresh After Tracking
+
+When users track or untrack habits, the application automatically refreshes all related data:
+
+1. **Immediate State Updates**: The `useHabits` hook updates its local state immediately
+2. **Cache Updates**: Local cache is updated with new tracking data
+3. **Coordinated Refresh**: A 100ms delayed refresh triggers updates to:
+   - Insights data (90-day calculations)
+   - Streaks data (365-day calculations)
+4. **Cache Clearing**: Insights and streaks caches are cleared to force fresh data retrieval
+
+### Implementation Details
+
+```typescript
+// DataRefreshContext coordinates updates across hooks
+const { triggerRefresh } = useDataRefresh()
+
+// After tracking a habit
+await trackHabit(trackingData)
+triggerRefresh() // Refreshes insights and streaks data
+```
+
+This ensures the dashboard always shows current data after any tracking activity, eliminating the need for manual page refreshes.
+
 ## Migration Notes
 
 This optimization maintains backward compatibility while significantly improving performance. Existing user data remains intact, and the user experience is enhanced without any breaking changes. 

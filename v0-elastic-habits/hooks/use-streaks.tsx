@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import type { HabitTracking } from "@/types/habit"
 import { useToast } from "./use-toast"
+import { useDataRefresh } from "@/contexts/data-refresh-context"
 
 const STREAKS_CACHE_KEY = 'momentum_streaks_cache_v1'
 const STREAKS_CACHE_TIMESTAMP_KEY = 'momentum_streaks_cache_timestamp_v1'
@@ -29,6 +30,7 @@ export function useStreaks() {
   const [isLoading, setIsLoading] = useState(true)
   const { user, session, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
+  const { registerRefreshFunctions } = useDataRefresh()
 
   // Fetch streaks data (last year)
   const fetchStreaks = useCallback(async (forceRefresh = false) => {
@@ -50,11 +52,18 @@ export function useStreaks() {
     }
 
     try {
-      const response = await fetch('/api/habits/tracking/streaks', {
+      // Create timeout promise for streaks data fetching
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Streaks fetch timeout')), 5000)
+      })
+
+      const fetchPromise = fetch('/api/habits/tracking/streaks', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       })
+
+      const response = await Promise.race([fetchPromise, timeoutPromise])
 
       if (!response.ok) {
         throw new Error('Failed to fetch streaks data')
@@ -78,11 +87,19 @@ export function useStreaks() {
         setStreaksTracking(cachedTracking)
       } else {
         setStreaksTracking([])
-        toast({
-          title: "Error fetching streaks data",
-          description: error.message,
-          variant: "destructive",
-        })
+        if (error.message === 'Streaks fetch timeout') {
+          toast({
+            title: "Streaks fetch timeout",
+            description: "Could not load streak data within 5 seconds. Please try again.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error fetching streaks data",
+            description: error.message,
+            variant: "destructive",
+          })
+        }
       }
     } finally {
       setIsLoading(false)
@@ -98,6 +115,17 @@ export function useStreaks() {
     }
     fetchStreaks()
   }, [fetchStreaks, user, session, authLoading])
+
+  // Register refresh function for global coordination
+  useEffect(() => {
+    const refreshStreaksGlobal = () => {
+      // Clear cache to force fresh data
+      localStorage.removeItem(STREAKS_CACHE_KEY)
+      localStorage.removeItem(STREAKS_CACHE_TIMESTAMP_KEY)
+      fetchStreaks(true)
+    }
+    registerRefreshFunctions({ refreshStreaks: refreshStreaksGlobal })
+  }, [fetchStreaks, registerRefreshFunctions])
 
   return {
     streaksTracking,
