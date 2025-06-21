@@ -6,12 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, CheckCircle2, Trophy } from "lucide-react"
-import { format } from "date-fns"
+import { addDays, subDays } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 import { useHabits } from "@/hooks/use-habits"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import { useTheme } from "next-themes"
 import Link from "next/link"
+import { useRecentActivity } from "@/hooks/use-recent-activity"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,25 +27,46 @@ import {
 import "@/styles/track.css"
 
 export default function TrackPage() {
-  const { habits, trackHabit, untrackHabit, getTrackedHabits, isLoading } = useHabits()
+  const { habits, trackHabit, untrackHabit, isLoading: habitsLoading } = useHabits()
+  const { 
+    recentTracking, 
+    getTrackedHabits, 
+    isLoading: recentActivityLoading 
+  } = useRecentActivity()
   const { user } = useAuth()
   const { toast } = useToast()
   const { theme } = useTheme()
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [userTimeZone, setUserTimeZone] = useState("UTC");
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  
   const [defaultTabs, setDefaultTabs] = useState<Record<string, string>>({})
   const [untrackingHabit, setUntrackingHabit] = useState<{
     habitId: string;
     activityIndex: number;
     levelIndex: number;
   } | null>(null)
-  const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy")
 
-  const formattedSelectedDateString = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate])
-  const isToday = formattedSelectedDateString === format(new Date(), "yyyy-MM-dd")
+  useEffect(() => {
+    setUserTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }, []);
+
+  const formattedDate = useMemo(() => {
+    return formatInTimeZone(selectedDate, userTimeZone, "EEEE, MMMM d, yyyy")
+  }, [selectedDate, userTimeZone]);
+
+  const formattedSelectedDateString = useMemo(() => {
+    return formatInTimeZone(selectedDate, userTimeZone, "yyyy-MM-dd")
+  }, [selectedDate, userTimeZone]);
+
+  const todayString = useMemo(() => {
+    return formatInTimeZone(new Date(), userTimeZone, "yyyy-MM-dd")
+  }, [userTimeZone]);
+
+  const isToday = formattedSelectedDateString === todayString;
 
   const trackedHabitsForDate = useMemo(
     () => getTrackedHabits(formattedSelectedDateString),
-    [getTrackedHabits, formattedSelectedDateString],
+    [getTrackedHabits, formattedSelectedDateString, recentTracking],
   )
 
   // Set default tabs based on tracked habits
@@ -70,7 +93,7 @@ export default function TrackPage() {
       }
       return currentDefaultTabs
     })
-  }, [habits, trackedHabitsForDate])
+  }, [habits, trackedHabitsForDate, recentTracking])
 
   const handleTrackHabit = (habitId: string, activityIndex: number, levelIndex: number) => {
     // Check if any level is already selected for this activity
@@ -160,7 +183,7 @@ export default function TrackPage() {
   }
 
   // Loading state
-  if (isLoading) {
+  if (habitsLoading || recentActivityLoading) {
     return (
       <div className="container max-w-5xl py-6 flex justify-center items-center min-h-[50vh]">
         <div className="text-center">
@@ -197,16 +220,16 @@ export default function TrackPage() {
           </span>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setSelectedDate(new Date(selectedDate.getTime() - 86400000))}>
+          <Button onClick={() => setSelectedDate(subDays(selectedDate, 1))}>
             Previous Day
           </Button>
           <Button onClick={() => setSelectedDate(new Date())} disabled={isToday}>
             Today
           </Button>
           <Button
-            onClick={() => setSelectedDate(new Date(selectedDate.getTime() + 86400000))}
+            onClick={() => setSelectedDate(addDays(selectedDate, 1))}
             disabled={
-              format(new Date(selectedDate.getTime() + 86400000), "yyyy-MM-dd") > format(new Date(), "yyyy-MM-dd")
+              formatInTimeZone(addDays(selectedDate, 1), userTimeZone, "yyyy-MM-dd") > todayString
             }
           >
             Next Day
