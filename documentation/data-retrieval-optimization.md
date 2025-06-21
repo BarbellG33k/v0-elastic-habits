@@ -8,11 +8,11 @@ The Momentum app implements an optimized data retrieval strategy using separate 
 
 ### API Endpoints
 
-1. **`/api/habits/tracking`** - Recent Activity (20 records)
-   - **Purpose**: Display recent habit completions
-   - **Data Limit**: 20 most recent records
-   - **Cache TTL**: 1 hour
-   - **Usage**: Recent Activity component
+1. **`/api/habits/tracking/recent`** - Recent Activity (last 7 days)
+   - **Purpose**: Display recent habit completions and power Current Streak
+   - **Data Limit**: All tracking data from last 7 days
+   - **Cache TTL**: 5 minutes
+   - **Usage**: Recent Activity component, Current Streak visualization
 
 2. **`/api/habits/tracking/insights`** - Insights Data (90 days)
    - **Purpose**: Calculate activity patterns and achievements
@@ -28,7 +28,8 @@ The Momentum app implements an optimized data retrieval strategy using separate 
 
 ### Client-Side Hooks
 
-- **`useHabits()`**: Core habits data and recent tracking (20 records)
+- **`useHabits()`**: Core habits data and basic tracking functionality
+- **`useRecentActivity()`**: Recent activity data (last 7 days)
 - **`useInsights()`**: Insights-specific data (90 days)
 - **`useStreaks()`**: Streak calculation data (365 days)
 
@@ -36,9 +37,10 @@ The Momentum app implements an optimized data retrieval strategy using separate 
 
 | Component | Data Period | Rationale |
 |-----------|-------------|-----------|
-| Recent Activity | 20 most recent records | Shows immediate recent activity |
+| Recent Activity | Last 7 days | Shows all recent activity with predictable data volume |
+| Current Streak | Last 7 days | Displays accurate daily streak for the week |
 | Insights Card | 90 days | Provides meaningful pattern analysis |
-| Current Streak | 365 days | Ensures accurate long-term streak calculation |
+| Long-term Streaks | 365 days | Ensures accurate long-term streak calculation |
 | Gold Achievements | 90 days | Recent achievement tracking |
 
 ## Performance Benefits
@@ -61,10 +63,10 @@ The Momentum app implements an optimized data retrieval strategy using separate 
 ### Database Queries
 
 ```sql
--- Recent Activity (20 records)
+-- Recent Activity (last 7 days)
 SELECT * FROM habit_tracking 
-ORDER BY timestamp DESC 
-LIMIT 20
+WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+ORDER BY timestamp DESC
 
 -- Insights (90 days)
 SELECT * FROM habit_tracking 
@@ -88,9 +90,10 @@ ORDER BY date DESC
 ### Dashboard Indicators
 
 Users see clear indicators of data periods:
-- Recent Activity: "*20 most recent"
+- Recent Activity: "*last 7 days"
+- Current Streak: "*last 7 days"
 - Insights: "*90 days"
-- Current Streak: "*365 days"
+- Long-term Streaks: "*365 days"
 
 This transparency helps users understand what data they're seeing and builds trust in the accuracy of the metrics.
 
@@ -116,9 +119,10 @@ When users track or untrack habits, the application automatically refreshes all 
 1. **Immediate State Updates**: The `useHabits` hook updates its local state immediately
 2. **Cache Updates**: Local cache is updated with new tracking data
 3. **Coordinated Refresh**: A 100ms delayed refresh triggers updates to:
+   - Recent activity data (last 7 days)
    - Insights data (90-day calculations)
    - Streaks data (365-day calculations)
-4. **Cache Clearing**: Insights and streaks caches are cleared to force fresh data retrieval
+4. **Cache Clearing**: All data caches are cleared to force fresh data retrieval
 
 ### Implementation Details
 

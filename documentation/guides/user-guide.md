@@ -49,13 +49,13 @@ The dashboard shows:
 - **Habits overview**: Your active habits and their completion status
 - **Current streak**: Your longest consecutive streak based on 365 days of data
 - **Insights**: Activity highlights and achievements from the last 90 days
-- **Recent activity**: Your 20 most recent habit completions
+- **Recent activity**: Your habit completions from the last 7 days
 
 #### Understanding Dashboard Data Periods
 
 Different sections of the dashboard use different time periods to provide the most relevant information:
 
-- **Recent Activity**: Shows your 20 most recent habit completions, sorted by activity date
+- **Recent Activity**: Shows your habit completions from the last 7 days, sorted by activity date
 - **Insights Card**: Analyzes your activity patterns from the last 90 days
 - **Current Streak**: Calculates streaks using up to 365 days of historical data
 - **Gold Achievements**: Counts achievements from the last 90 days

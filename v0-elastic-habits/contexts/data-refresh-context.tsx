@@ -5,6 +5,7 @@ import React, { createContext, useContext, useCallback, useRef } from "react"
 type RefreshFunctions = {
   refreshInsights?: () => void
   refreshStreaks?: () => void
+  refreshRecent?: () => void
 }
 
 type DataRefreshContextType = {
@@ -22,10 +23,13 @@ export function DataRefreshProvider({ children }: { children: React.ReactNode })
   }, [])
 
   const triggerRefresh = useCallback(() => {
-    const { refreshInsights, refreshStreaks } = refreshFunctionsRef.current
+    const { refreshInsights, refreshStreaks, refreshRecent } = refreshFunctionsRef.current
     
     // Trigger refreshes with a small delay to ensure the API has processed the new data
     setTimeout(() => {
+      if (refreshRecent) {
+        refreshRecent()
+      }
       if (refreshInsights) {
         refreshInsights()
       }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useHabits } from "@/hooks/use-habits"
+import { useRecentActivity } from "@/hooks/use-recent-activity"
 import { format, parseISO } from "date-fns"
 import type { Habit } from "@/types/habit"
 
@@ -14,14 +15,15 @@ type ActivityItem = {
 }
 
 export function RecentActivity() {
-  const { habits, tracking } = useHabits()
+  const { habits } = useHabits()
+  const { recentTracking } = useRecentActivity()
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
 
   useEffect(() => {
-    if (!habits.length || !tracking.length) return
+    if (!habits.length || !recentTracking.length) return
 
     // Get the most recent tracking entries sorted by activity date, then timestamp as tiebreaker
-    const sortedTracking = [...tracking]
+    const sortedTracking = [...recentTracking]
       .sort((a, b) => {
         const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime()
         if (dateComparison !== 0) return dateComparison
@@ -46,7 +48,7 @@ export function RecentActivity() {
       .filter(Boolean) as ActivityItem[]
 
     setRecentActivity(activityItems)
-  }, [habits, tracking])
+  }, [habits, recentTracking])
 
   const formatRelativeDate = (dateStr: string) => {
     const today = format(new Date(), "yyyy-MM-dd")

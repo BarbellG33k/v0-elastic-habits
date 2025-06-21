@@ -238,8 +238,8 @@ export default function Home() {
         <div className="mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your habit completions <span className="text-xs opacity-75">*20 most recent</span></CardDescription>
+                              <CardTitle>Recent Activity <span className="text-xs text-muted-foreground">*last 7 days</span></CardTitle>
+                              <CardDescription>Your habit completions from the past week</CardDescription>
             </CardHeader>
             <CardContent>
               <RecentActivity />

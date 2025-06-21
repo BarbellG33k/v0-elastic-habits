@@ -1,29 +1,38 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { format, subDays } from "date-fns"
-import { useHabits } from "@/hooks/use-habits"
+import { subDays } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
+import { useRecentActivity } from "@/hooks/use-recent-activity"
 
 export function DailyStreak() {
-  const { getTrackedHabits } = useHabits()
+  const { getTrackedHabits, recentTracking } = useRecentActivity()
   const [days, setDays] = useState<{ date: string; hasActivity: boolean }[]>([])
+  const [todayDate, setTodayDate] = useState<string>("")
 
   useEffect(() => {
-    // Generate the last 7 days
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const today = new Date()
+    
     const lastSevenDays = Array.from({ length: 7 }, (_, i) => {
-      const date = format(subDays(new Date(), 6 - i), "yyyy-MM-dd")
-      const hasActivity = getTrackedHabits(date).length > 0
-      return { date, hasActivity }
+      const date = subDays(today, 6 - i)
+      const dateStr = formatInTimeZone(date, userTimeZone, "yyyy-MM-dd")
+      const hasActivity = getTrackedHabits(dateStr).length > 0
+      return { date: dateStr, hasActivity }
     })
-
+    
     setDays(lastSevenDays)
-  }, [getTrackedHabits])
+    setTodayDate(formatInTimeZone(today, userTimeZone, "yyyy-MM-dd"))
+    
+  }, [getTrackedHabits, recentTracking])
 
   return (
     <div className="flex justify-between items-center w-full">
       {days.map((day, index) => {
-        const dayName = format(new Date(day.date), "E")
-        const isToday = day.date === format(new Date(), "yyyy-MM-dd")
+        const dayDate = new Date(`${day.date}T00:00:00`)
+        const dayName = formatInTimeZone(dayDate, "UTC", "E")
+        const dayOfMonth = formatInTimeZone(dayDate, "UTC", "d")
+        const isToday = day.date === todayDate
 
         return (
           <div key={index} className="flex flex-col items-center">
@@ -34,7 +43,7 @@ export function DailyStreak() {
                 ${day.hasActivity ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}
               `}
             >
-              {format(new Date(day.date), "d")}
+              {dayOfMonth}
             </div>
           </div>
         )
